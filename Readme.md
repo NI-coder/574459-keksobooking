@@ -1,7 +1,7 @@
 # Личный проект «Кексобукинг» [![Build status][travis-image]][travis-url]
 
 * Студент: [Николаев Игорь](https://up.htmlacademy.ru/javascript/16/user/574459).
-* Наставник: `Неизвестно`.
+* Наставник: [Балесный Алексей](https://up.htmlacademy.ru/javascript/16/user/221665).
 
 ---
 
