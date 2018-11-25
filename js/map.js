@@ -14,7 +14,8 @@ var MAX_GUESTS_NUMBER = 10;
 
 // генератор случайных чисел в диапазоне
 var getRandomNum = function (min, max) {
-  return Math.round(Math.random() * (max - min)) + min;
+  var rand = min + Math.random() * (max + 1 - min);
+  return Math.floor(rand);
 };
 
 // координаты метки локации
@@ -210,13 +211,26 @@ for (i = 0; i < OFFER_CARDS_QUANTITY; i++) {
 map.insertBefore(fragment, mapFiltersContainer);
 
 var mapPin = map.querySelectorAll('.map__pin');
-var mapPinMain = map.querySelector('.map__pin--main');
 var mapCard = map.querySelectorAll('.map__card');
-// var mapCardClose = map.querySelectorAll('.popup__close');
 
+// слушаем клики по меткам объявлений и открываем объявления
 for (i = 0; i < mapPin.length; i++) {
-  mapPin[2].addEventListener('click', function (evt) {
-  evt.preventDefault();
-  mapPin[2].classList.add('map__pin--active');
-  mapCard[2].classList.remove('visually-hidden');
+  mapPin[i].addEventListener('click', function (evt) {
+    evt.preventDefault();
+    mapCard[i].classList.remove('visually-hidden');
+    if (!mapPin[i].classList.contains('map__pin--main')) {
+      mapPin[i].classList.add('map__pin--active');
+    }
+  });
+}
+
+// слушаем клики по кнопке закрытия и закрываем объявление
+var mapCardClose = map.querySelectorAll('.popup__close');
+for (i = 0; i < mapCard.length; i++) {
+  mapCardClose[i].addEventListener('click', function (evt) {
+    evt.preventDefault();
+    if (!mapCard[i].classList.contains('visually-hidden')) {
+      mapCard[i].classList.add('visually-hidden');
+    }
+  });
 }
