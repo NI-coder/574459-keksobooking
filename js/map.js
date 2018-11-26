@@ -18,13 +18,6 @@ var getRandomNum = function (min, max) {
   return Math.floor(rand);
 };
 
-// функция удаления всех потомков из родителя
-var removeChildren = function (element) {
-  while (element.lastChild) {
-    element.removeChild(element.lastChild);
-  }
-};
-
 // координаты метки локации
 var getLocation = function () {
   var x = getRandomNum(MIN_X, MAX_X) - PIN_WIDTH / 2;
@@ -124,7 +117,7 @@ var mapPinTemplate = document.querySelector('#pin').content.querySelector('.map_
 var fragment = document.createDocumentFragment();
 
 // создадим метки на основе массива входных данных
-var getMapPins = function (cards) {
+var renderMapPins = function (cards) {
   for (var i = 0; i < cards.length; i++) {
     var mapPinElement = mapPinTemplate.cloneNode(true);
     mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
@@ -135,11 +128,9 @@ var getMapPins = function (cards) {
   }
 
   // выгружаем разметку меток из шаблона в основную разметку
-  var mapPins = mapPinsBlock.appendChild(fragment);
-
-  return mapPins;
+  mapPinsBlock.appendChild(fragment);
 };
-getMapPins(offerCards);
+renderMapPins(offerCards);
 
 // найдём блок, перед которым будем вставлять карточки объявлений
 var mapFiltersContainer = document.querySelector('.map__filters-container');
@@ -184,7 +175,6 @@ var getMapOfferCard = function (card) {
       guestsRus = 'гостя';
     }
     offerСapacity.textContent = card.offer.rooms + ' ' + roomsRus + ' для ' + card.offer.guests + ' ' + guestsRus;
-    return offerСapacity.textContent;
   };
   getOfferСapacity();
 
@@ -194,7 +184,7 @@ var getMapOfferCard = function (card) {
   var getOfferFeatures = function () {
     var offerFeatures = mapCardElement.querySelector('.popup__features');
     if (card.offer.features.length > 0) {
-      removeChildren(offerFeatures);
+      offerFeatures.innerHTML = '';
 
       var featuresClasses = {
         wifi: 'popup__feature--wifi',
@@ -219,11 +209,11 @@ var getMapOfferCard = function (card) {
 
   var offerPhotos = mapCardElement.querySelector('.popup__photos');
   if (card.offer.photos.length > 0) {
-    for (var j = 0; j < card.offer.photos.length - 1; j++) {
-      var newPhoto = offerPhotos.children[0].cloneNode(true);
-      offerPhotos.appendChild(newPhoto);
-    }
-    for (j = 0; j < card.offer.photos.length; j++) {
+    for (var j = 0; j < card.offer.photos.length; j++) {
+      if (j < card.offer.photos.length - 1) {
+        var newPhoto = offerPhotos.children[0].cloneNode(true);
+        offerPhotos.appendChild(newPhoto);
+      }
       offerPhotos.children[j].src = card.offer.photos[j];
     }
   }
