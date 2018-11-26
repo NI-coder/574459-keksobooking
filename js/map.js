@@ -1,8 +1,8 @@
 'use strict';
 
-var MIN_X = 0; // произвольные данные, надо менять
+var MIN_X = 0;
 var MIN_Y = 130;
-var MAX_X = 1150; // произвольные данные, надо менять
+var MAX_X = 1150;
 var MAX_Y = 630;
 var OFFER_CARDS_QUANTITY = 8;
 var PIN_WIDTH = 50;
@@ -104,7 +104,7 @@ var getOfferCardsList = function () {
         checkin: getRandomNum(12, 14) + ':00',
         checkout: getRandomNum(12, 14) + ':00',
         features: getFeatures(featuresArr),
-        description: "",
+        description: '',
         photos: getShuffledPhotos(photosArr)
       }
     };
