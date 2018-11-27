@@ -217,9 +217,9 @@ var setMapOfferCard = function (card) {
   offerType.textContent = TYPES_RUS[card.offer.type];
   offerСapacity.textContent = card.offer.rooms + ' ' + capacityDatas.roomsNum + ' для ' + card.offer.guests + ' ' + capacityDatas.guestsNum;
   offerTime.textContent = 'Заезд после ' + card.offer.checkin + ', выезд до ' + card.offer.checkout;
-  setOfferFeatures(offerFeatures, offerCards[0]);
+  setOfferFeatures(offerFeatures, card);
   offerDescription.textContent = card.offer.description;
-  setOfferPhotos(offerPhotos, offerCards[0]);
+  setOfferPhotos(offerPhotos, card);
   offerAvatar.src = card.author.avatar;
 
   // загрузим сформированную разметку во временное хранилище
