@@ -155,7 +155,7 @@ var renderMapPins = function (cards) {
 renderMapPins(offerCards);
 
 // подготовим детали текста о вместимости предлагаемой недвижимости
-var arrangeСapacityData = function (roomsNum, guestsNum) {
+var getСapacityData = function (roomsNum, guestsNum) {
   var roomsRus = 'комнаты';
   var guestsRus = guestsNum === 1 ? 'гостя' : 'гостей';
   if (roomsNum === 1) {
@@ -164,34 +164,35 @@ var arrangeСapacityData = function (roomsNum, guestsNum) {
   if (roomsNum >= 5) {
     roomsRus = 'комнат';
   }
-  return [roomsRus, guestsRus];
+  return {
+    roomsNum: roomsRus,
+    guestsNum: guestsRus
+  };
 };
 
 // сформируем DOM-элемент списка дополнительных характеристик размещения
-var setOfferFeatures = function (list) {
-  list.innerHTML = '';
-  if (offerCards[0].offer.features.length > 0) {
-    for (var i = 0; i < offerCards[0].offer.features.length; i++) {
-      var listElement = document.createElement('li');
-      listElement.className = 'popup__feature ' + FEATURES_CLASSES[offerCards[0].offer.features[i]];
-      list.appendChild(listElement);
+var setOfferFeatures = function (featureItems, offerCard) {
+  featureItems.innerHTML = '';
+  if (offerCard.offer.features.length > 0) {
+    for (var i = 0; i < offerCard.offer.features.length; i++) {
+      var featureItem = document.createElement('li');
+      featureItem.className = 'popup__feature ' + FEATURES_CLASSES[offerCard.offer.features[i]];
+      featureItems.appendChild(featureItem);
     }
   }
-  return list;
 };
 
 // сформируем DOM-элемент списка фотографий
-var setOfferPhotos = function (photos) {
-  if (offerCards[0].offer.photos.length > 0) {
-    for (var j = 0; j < offerCards[0].offer.photos.length; j++) {
-      if (j < offerCards[0].offer.photos.length - 1) {
+var setOfferPhotos = function (photos, offerCard) {
+  if (offerCard.offer.photos.length > 0) {
+    for (var j = 0; j < offerCard.offer.photos.length; j++) {
+      if (j < offerCard.offer.photos.length - 1) {
         var newPhoto = photos.children[0].cloneNode(true);
         photos.appendChild(newPhoto);
       }
-      photos.children[j].src = offerCards[0].offer.photos[j];
+      photos.children[j].src = offerCard.offer.photos[j];
     }
   }
-  return photos;
 };
 
 // создадим DOM-элемент карточки объявления
@@ -202,7 +203,7 @@ var setMapOfferCard = function (card) {
   var offerPrice = mapCardElement.querySelector('.popup__text--price');
   var offerType = mapCardElement.querySelector('.popup__type');
   var offerСapacity = mapCardElement.querySelector('.popup__text--capacity');
-  var capacityDatas = arrangeСapacityData(card.offer.rooms, card.offer.guests);
+  var capacityDatas = getСapacityData(card.offer.rooms, card.offer.guests);
   var offerTime = mapCardElement.querySelector('.popup__text--time');
   var offerFeatures = mapCardElement.querySelector('.popup__features');
   var offerDescription = mapCardElement.querySelector('.popup__description');
@@ -214,11 +215,11 @@ var setMapOfferCard = function (card) {
   offerAddress.textContent = card.offer.address;
   offerPrice.textContent = card.offer.price + ' ₽/ночь';
   offerType.textContent = TYPES_RUS[card.offer.type];
-  offerСapacity.textContent = card.offer.rooms + ' ' + capacityDatas[0] + ' для ' + card.offer.guests + ' ' + capacityDatas[1];
+  offerСapacity.textContent = card.offer.rooms + ' ' + capacityDatas.roomsNum + ' для ' + card.offer.guests + ' ' + capacityDatas.guestsNum;
   offerTime.textContent = 'Заезд после ' + card.offer.checkin + ', выезд до ' + card.offer.checkout;
-  setOfferFeatures(offerFeatures);
+  setOfferFeatures(offerFeatures, offerCards[0]);
   offerDescription.textContent = card.offer.description;
-  setOfferPhotos(offerPhotos);
+  setOfferPhotos(offerPhotos, offerCards[0]);
   offerAvatar.src = card.author.avatar;
 
   // загрузим сформированную разметку во временное хранилище
