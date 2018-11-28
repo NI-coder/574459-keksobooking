@@ -1,6 +1,14 @@
 'use strict';
 
 var OFFER_CARDS_QUANTITY = 8;
+var DEFAULT_PIN_WIDTH = 156;
+var DEFAULT_PIN_HEIGHT = 156;
+var DEFAULT_PIN_X = 570;
+var DEFAULT_PIN_Y = 375;
+var DEFAULT_PIN_POSITION = {
+  x: Math.round(DEFAULT_PIN_X + DEFAULT_PIN_WIDTH / 2),
+  y: Math.round(DEFAULT_PIN_Y + DEFAULT_PIN_HEIGHT / 2)
+};
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
 var MIN_X = 0;
@@ -52,11 +60,24 @@ var mapPinsBlock = document.querySelector('.map__pins');
 // найдём шаблон метки
 var mapPinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
 
+// найдём метку по умолчанию, активирующую карту
+var defaultMapPin = mapPinsBlock.querySelector('.map__pin--main');
+
 // найдём блок, перед которым будем вставлять карточки объявлений
 var mapFiltersContainer = document.querySelector('.map__filters-container');
 
 // найдём шаблон карточки объявлений
 var mapCardTemplate = document.querySelector('#card').content.querySelector('.map__card');
+
+// найдём форму фильтрации объявлений
+var filterForm = document.querySelector('.map__filters');
+
+// найдём форму объявления
+var adForm = document.querySelector('.ad-form');
+
+// найдём поле адреса
+var addressInput = document.querySelector('#address');
+
 
 // генератор случайных чисел в диапазоне
 var getRandomNum = function (min, max) {
@@ -132,9 +153,6 @@ var getOfferCardsList = function () {
   return offerCards;
 };
 var offerCards = getOfferCardsList();
-
-// покажем основной блок разметки, в который будем вносить изменения
-map.classList.remove('map--faded');
 
 // создадим виртуальный контейнер для временного хранения создаваемых меток
 var fragment = document.createDocumentFragment();
@@ -229,6 +247,26 @@ var setMapOfferCard = function (card) {
   map.insertBefore(mapCardInFragment, mapFiltersContainer);
 };
 setMapOfferCard(offerCards[0]);
+
+// заблокируем доступ к полям в форме фильтрации
+for (var i = 0; i < filterForm.children.length; i++) {
+  filterForm.children[i].disabled = 'disabled';
+}
+
+// активируем карту и интерактивные поля
+defaultMapPin.addEventListener('click', function (evt) {
+  evt.preventDefault();
+  map.classList.remove('map--faded');
+  adForm.classList.remove('ad-form--disabled');
+  for (i = 0; i < filterForm.children.length; i++) {
+    filterForm.children[i].disabled = '';
+  }
+});
+
+defaultMapPin.addEventListener('mouseup', function () {
+  addressInput.value = DEFAULT_PIN_POSITION.x + ', ' + DEFAULT_PIN_POSITION.y;
+});
+
 
 // var mapPin = map.querySelectorAll('.map__pin');
 // var mapCard = map.querySelectorAll('.map__card');
