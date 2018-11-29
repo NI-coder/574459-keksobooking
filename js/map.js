@@ -1,13 +1,18 @@
 'use strict';
 
 var OFFER_CARDS_QUANTITY = 8;
-var DEFAULT_PIN_WIDTH = 156;
-var DEFAULT_PIN_HEIGHT = 156;
+var DEFAULT_PIN_WIDTH = 65;
+var DEFAULT_PIN_HEIGHT = 65;
+var DEFAULT_PIN_ACTIVE_HEIGHT = DEFAULT_PIN_HEIGHT + 16;
 var DEFAULT_PIN_X = 570;
 var DEFAULT_PIN_Y = 375;
-var DEFAULT_PIN_POSITION = {
+var DEFAULT_PIN_FADE_POSITION = {
   x: Math.round(DEFAULT_PIN_X + DEFAULT_PIN_WIDTH / 2),
   y: Math.round(DEFAULT_PIN_Y + DEFAULT_PIN_HEIGHT / 2)
+};
+var DEFAULT_PIN_START_POSITION = {
+  x: Math.round(DEFAULT_PIN_X + DEFAULT_PIN_WIDTH / 2),
+  y: Math.round(DEFAULT_PIN_Y + DEFAULT_PIN_ACTIVE_HEIGHT)
 };
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
@@ -78,7 +83,6 @@ var adForm = document.querySelector('.ad-form');
 // найдём поле адреса
 var addressInput = document.querySelector('#address');
 
-
 // генератор случайных чисел в диапазоне
 var getRandomNum = function (min, max) {
   var rand = min + Math.random() * (max + 1 - min);
@@ -122,7 +126,7 @@ var getLocation = function () {
   return location;
 };
 
-// создаём массив объектов - карточек объявлений
+// создаём массив объектов - входных данных для карточек объявлений
 var getOfferCardsList = function () {
   var offerCards = [];
   for (var i = 0; i < OFFER_CARDS_QUANTITY; i++) {
@@ -170,7 +174,6 @@ var renderMapPins = function (cards) {
   // выгружаем разметку меток из шаблона в основную разметку
   mapPinsBlock.appendChild(fragment);
 };
-renderMapPins(offerCards);
 
 // подготовим детали текста о вместимости предлагаемой недвижимости
 var getСapacityData = function (roomsNum, guestsNum) {
@@ -246,49 +249,59 @@ var setMapOfferCard = function (card) {
   // выгружаем разметку объявления из временного хранилища в необходимое место в основной разметке
   map.insertBefore(mapCardInFragment, mapFiltersContainer);
 };
-setMapOfferCard(offerCards[0]);
+
+// выгрузим разметку меток похожих объявлений в основную разметку и скроем их
+renderMapPins(offerCards);
+var offerPins = mapPinsBlock.querySelectorAll('.map__pin');
+for (i = 1; i < offerPins.length; i++) {
+  offerPins[i].classList.add('visually-hidden');
+}
 
 // заблокируем доступ к полям в форме фильтрации
 for (var i = 0; i < filterForm.children.length; i++) {
   filterForm.children[i].disabled = 'disabled';
 }
 
+// начальные координаты дефолтной метки
+addressInput.value = DEFAULT_PIN_FADE_POSITION.x + ', ' + DEFAULT_PIN_FADE_POSITION.y;
+
+// начальные координаты дефолтной активированной метки
+defaultMapPin.addEventListener('mouseup', function () {
+  addressInput.value = DEFAULT_PIN_START_POSITION.x + ', ' + DEFAULT_PIN_START_POSITION.y;
+});
+
 // активируем карту и интерактивные поля
 defaultMapPin.addEventListener('click', function (evt) {
   evt.preventDefault();
   map.classList.remove('map--faded');
+  for (i = 1; i < offerPins.length; i++) {
+    offerPins[i].classList.remove('visually-hidden');
+  }
   adForm.classList.remove('ad-form--disabled');
   for (i = 0; i < filterForm.children.length; i++) {
     filterForm.children[i].disabled = '';
   }
 });
 
-defaultMapPin.addEventListener('mouseup', function () {
-  addressInput.value = DEFAULT_PIN_POSITION.x + ', ' + DEFAULT_PIN_POSITION.y;
-});
+// клик по метке отрисовывает карточку соответствующего объявления, помещая его в основную разметку
+var pinsClickHandler = function (pin, card) {
+  pin.addEventListener('click', function () {
+    setMapOfferCard(card);
+    closeMapOfferCard();
+  });
+};
 
+// вызываем функцию отрисовки объявления по клику по метке
+for (i = 1; i < offerPins.length; i++) {
+  pinsClickHandler(offerPins[i], offerCards[i - 1]);
+}
 
-// var mapPin = map.querySelectorAll('.map__pin');
-// var mapCard = map.querySelectorAll('.map__card');
-
-// слушаем клики по меткам объявлений и открываем объявления
-// for (i = 0; i < mapPin.length; i++) {
-//  mapPin[i].addEventListener('click', function (evt) {
-//    evt.preventDefault();
-//    mapCard[i].classList.remove('visually-hidden');
-//    if (!mapPin[i].classList.contains('map__pin--main')) {
-//      mapPin[i].classList.add('map__pin--active');
-//    }
-//  });
-// }
-
-// слушаем клики по кнопке закрытия и закрываем объявление
-// var mapCardClose = map.querySelectorAll('.popup__close');
-// for (i = 0; i < mapCard.length; i++) {
-//  mapCardClose[i].addEventListener('click', function (evt) {
-//    evt.preventDefault();
-//    if (!mapCard[i].classList.contains('visually-hidden')) {
-//      mapCard[i].classList.add('visually-hidden');
-//    }
-//  });
-// }
+// функция закрытия попапа с объявлением
+var closeMapOfferCard = function () {
+  var popupCard = map.querySelector('.map__card');
+  var closeButton = map.querySelector('.popup__close');
+  closeButton.addEventListener('click', function () {
+    popupCard.parentElement.removeChild(popupCard);
+    popupCard = null;
+  });
+};
