@@ -176,13 +176,6 @@ var renderPins = function (cards) {
   mapPinsBlock.appendChild(fragment);
 };
 
-// выгрузим разметку меток похожих объявлений в основную разметку и скроем их
-// renderMapPins(offerCards);
-// var offerPins = mapPinsBlock.querySelectorAll('.map__pin');
-// for (i = 1; i < offerPins.length; i++) {
-//    offerPins[i].classList.add('visually-hidden');
-// }
-
 // подготовим детали текста о вместимости предлагаемой недвижимости
 var getСapacityData = function (roomsNum, guestsNum) {
   var roomsRus = 'комнаты';
@@ -257,26 +250,27 @@ var getPopupCard = function (card) {
   return map.insertBefore(popupInFragment, mapFiltersContainer);
 };
 
-// заблокируем доступ к полям в форме подачи объявления
-var blockAdd = function (add) {
-  for (var i = 0; i < add.children.length; i++) {
-    add.children[i].disabled = 'disabled';
-  }
-};
-
-// заблокируем доступ к полям в форме фильтрации
-var blockFilter = function (filter) {
-  for (var i = 0; i < filter.children.length; i++) {
-    filter.children[i].disabled = 'disabled';
-  }
-};
-
+// установим параметры начального неактивного состояния
 var setDefaultMode = function () {
+  // заблокируем доступ к полям в форме подачи объявления
+  var blockAdd = function (add) {
+    for (var i = 0; i < add.children.length; i++) {
+      add.children[i].disabled = 'disabled';
+    }
+  };
+
+  // заблокируем доступ к полям в форме фильтрации
+  var blockFilter = function (filter) {
+    for (var i = 0; i < filter.children.length; i++) {
+      filter.children[i].disabled = 'disabled';
+    }
+  };
+
   blockAdd(adForm);
   blockFilter(filterForm);
 
   // поле адреса и начальные координаты дефолтной метки
-  addressInput.disabled = 'disabled';
+  addressInput.disabled = 'readonly';
   addressInput.value = DEFAULT_PIN_FADE_POSITION.x + ', ' + DEFAULT_PIN_FADE_POSITION.y;
 
   defaultPin.draggable = 'true';
@@ -305,15 +299,15 @@ var onDefaultPinDrag = function () {
 
   // выгрузим теги меток в основную разметку и найдём их
   renderPins(dataCards);
-  var activePins = mapPinsBlock.querySelectorAll('.map__pin:not(:nth-child(2))');
+  var activePins = mapPinsBlock.querySelectorAll('.map__pin:not(.map__pin--main)');
 
   // отрисуем попап объявления по клику по меткам
-  var openPopup = function (pins, datas) {
+  var showOfferCard = function (pins, datas) {
     for (i = 0; i < pins.length; i++) {
-      addPinsClickHandler(pins[i], datas[i]);
+      renderCardByClick(pins[i], datas[i]);
     }
   };
-  openPopup(activePins, dataCards);
+  showOfferCard(activePins, dataCards);
 
   // удалим обработчик клика по стартовой метке
   defaultPin.removeEventListener('mouseup', onDefaultPinDrag);
@@ -323,36 +317,38 @@ var onDefaultPinDrag = function () {
 defaultPin.addEventListener('mouseup', onDefaultPinDrag);
 
 // клик по метке отрисовывает карточку соответствующего объявления, помещая его в основную разметку
-var addPinsClickHandler = function (pin, data) {
+var renderCardByClick = function (pin, data) {
+  // функция отрисовки карточки объявления по клику по меткам
   pin.addEventListener('click', function () {
-    clearFromEarlierPopup();
-    var popupCard = getPopupCard(data);
+
+    // функция удаления попапа по Esc
     var onPopupEscPress = function (evt) {
       if (evt.keyCode === ESC_KEYCODE && popupCard) {
         deletePopup(popupCard);
-        document.removeEventListener('keydown', onPopupEscPress);
       }
     };
+
+    // функция удаления попапа
+    var deletePopup = function (openedCard) {
+      openedCard.parentElement.removeChild(openedCard);
+      openedCard = null;
+      document.removeEventListener('keydown', onPopupEscPress);
+    };
+
+    // очищение карты от ранее отрисованной карточки-попапа
+    var clearFromEarlierPopup = function () {
+      var popup = map.querySelector('.map__card');
+      if (popup) {
+        deletePopup(popup);
+      }
+    };
+
+    clearFromEarlierPopup();
+    var popupCard = getPopupCard(data);
     document.addEventListener('keydown', onPopupEscPress);
     var closeButton = popupCard.querySelector('.popup__close');
     closeButton.addEventListener('click', function () {
-      if (popupCard) {
-        deletePopup(popupCard);
-      }
+      deletePopup(popupCard);
     });
   });
-};
-
-// очищение карты от ранее отрисованной карточки-попапа
-var clearFromEarlierPopup = function () {
-  var popup = map.querySelector('article');
-  if (popup) {
-    deletePopup(popup);
-  }
-};
-
-// функция удаления попапа
-var deletePopup = function (opendCard) {
-  opendCard.parentElement.removeChild(opendCard);
-  opendCard = null;
 };
