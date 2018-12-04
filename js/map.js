@@ -127,6 +127,30 @@ var getLocation = function () {
   return location;
 };
 
+var popupCard;
+
+// функция удаления попапа по Esc
+var onPopupEscPress = function (evt) {
+  if (evt.keyCode === ESC_KEYCODE && popupCard) {
+    deletePopup();
+  }
+};
+
+// функция удаления попапа
+var deletePopup = function () {
+  popupCard.parentElement.removeChild(popupCard);
+  popupCard = null;
+  document.removeEventListener('keydown', onPopupEscPress);
+};
+
+// очищение карты от ранее отрисованной карточки-попапа
+var clearFromEarlierPopup = function () {
+  var popup = map.querySelector('.map__card');
+  if (popup) {
+    deletePopup();
+  }
+};
+
 // создаём массив объектов - входных данных для карточек объявлений
 var getDataList = function () {
   var dataCards = [];
@@ -157,7 +181,6 @@ var getDataList = function () {
   }
   return dataCards;
 };
-// var dataCards = getDataList();
 
 // создадим виртуальный контейнер для временного хранения создаваемых меток
 var fragment = document.createDocumentFragment();
@@ -174,6 +197,8 @@ var renderPins = function (cards) {
   }
   // выгружаем разметку меток из шаблона в основную разметку
   mapPinsBlock.appendChild(fragment);
+
+  return mapPinsBlock.querySelectorAll('.map__pin:not(.map__pin--main)');
 };
 
 // подготовим детали текста о вместимости предлагаемой недвижимости
@@ -297,17 +322,16 @@ var onDefaultPinDrag = function () {
   // создадим базу данных
   var dataCards = getDataList();
 
-  // выгрузим теги меток в основную разметку и найдём их
-  renderPins(dataCards);
-  var activePins = mapPinsBlock.querySelectorAll('.map__pin:not(.map__pin--main)');
+  // выгрузим теги меток в основную разметку
+  var activePins = renderPins(dataCards);
 
-  // отрисуем попап объявления по клику по меткам
-  var showOfferCard = function (pins, datas) {
+  // установим меткам обработчики кликов
+  var addPinsHandlers = function (pins, datas) {
     for (i = 0; i < pins.length; i++) {
-      renderCardByClick(pins[i], datas[i]);
+      addPinsClickHandler(pins[i], datas[i]);
     }
   };
-  showOfferCard(activePins, dataCards);
+  addPinsHandlers(activePins, dataCards);
 
   // удалим обработчик клика по стартовой метке
   defaultPin.removeEventListener('mouseup', onDefaultPinDrag);
@@ -316,35 +340,11 @@ var onDefaultPinDrag = function () {
 // активируем карту и интерактивные поля
 defaultPin.addEventListener('mouseup', onDefaultPinDrag);
 
-// клик по метке отрисовывает карточку соответствующего объявления, помещая его в основную разметку
-var renderCardByClick = function (pin, data) {
-  // функция отрисовки карточки объявления по клику по меткам
+// клик по метке связывает данные с получением и отрисовкой карточки объявления
+var addPinsClickHandler = function (pin, data) {
   pin.addEventListener('click', function () {
-
-    // функция удаления попапа по Esc
-    var onPopupEscPress = function (evt) {
-      if (evt.keyCode === ESC_KEYCODE && popupCard) {
-        deletePopup(popupCard);
-      }
-    };
-
-    // функция удаления попапа
-    var deletePopup = function (openedCard) {
-      openedCard.parentElement.removeChild(openedCard);
-      openedCard = null;
-      document.removeEventListener('keydown', onPopupEscPress);
-    };
-
-    // очищение карты от ранее отрисованной карточки-попапа
-    var clearFromEarlierPopup = function () {
-      var popup = map.querySelector('.map__card');
-      if (popup) {
-        deletePopup(popup);
-      }
-    };
-
     clearFromEarlierPopup();
-    var popupCard = getPopupCard(data);
+    popupCard = getPopupCard(data);
     document.addEventListener('keydown', onPopupEscPress);
     var closeButton = popupCard.querySelector('.popup__close');
     closeButton.addEventListener('click', function () {
