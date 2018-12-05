@@ -1,6 +1,19 @@
 'use strict';
 
 var OFFER_CARDS_QUANTITY = 8;
+var DEFAULT_PIN_WIDTH = 65;
+var DEFAULT_PIN_HEIGHT = 65;
+var DEFAULT_PIN_ACTIVE_HEIGHT = DEFAULT_PIN_HEIGHT + 16;
+var DEFAULT_PIN_X = 570;
+var DEFAULT_PIN_Y = 375;
+var DEFAULT_PIN_FADE_POSITION = {
+  x: Math.round(DEFAULT_PIN_X + DEFAULT_PIN_WIDTH / 2),
+  y: Math.round(DEFAULT_PIN_Y + DEFAULT_PIN_HEIGHT / 2)
+};
+var DEFAULT_PIN_START_POSITION = {
+  x: Math.round(DEFAULT_PIN_X + DEFAULT_PIN_WIDTH / 2),
+  y: Math.round(DEFAULT_PIN_Y + DEFAULT_PIN_ACTIVE_HEIGHT)
+};
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
 var MIN_X = 0;
@@ -25,6 +38,7 @@ var FEATURES_CLASSES = {
   elevator: 'popup__feature--elevator',
   conditioner: 'popup__feature--conditioner'
 };
+var ESC_KEYCODE = 27;
 
 // адреса аватарок
 var avatars = ['img/avatars/user01.png', 'img/avatars/user02.png', 'img/avatars/user03.png', 'img/avatars/user04.png', 'img/avatars/user05.png', 'img/avatars/user06.png', 'img/avatars/user07.png', 'img/avatars/user08.png'];
@@ -52,11 +66,23 @@ var mapPinsBlock = document.querySelector('.map__pins');
 // найдём шаблон метки
 var mapPinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
 
+// найдём метку по умолчанию, активирующую карту
+var defaultPin = mapPinsBlock.querySelector('.map__pin--main');
+
 // найдём блок, перед которым будем вставлять карточки объявлений
 var mapFiltersContainer = document.querySelector('.map__filters-container');
 
 // найдём шаблон карточки объявлений
 var mapCardTemplate = document.querySelector('#card').content.querySelector('.map__card');
+
+// найдём форму фильтрации объявлений
+var filterForm = document.querySelector('.map__filters');
+
+// найдём форму объявления
+var adForm = document.querySelector('.ad-form');
+
+// найдём поле адреса
+var addressInput = document.querySelector('#address');
 
 // генератор случайных чисел в диапазоне
 var getRandomNum = function (min, max) {
@@ -101,12 +127,43 @@ var getLocation = function () {
   return location;
 };
 
-// создаём массив объектов - карточек объявлений
-var getOfferCardsList = function () {
-  var offerCards = [];
+var popupCard;
+
+// функция удаления класса у отработавшей метки
+var deletePrevPinClass = function () {
+  var prevPin = mapPinsBlock.querySelector('.map__pin--active');
+  if (prevPin) {
+    prevPin.classList.remove('map__pin--active');
+  }
+};
+
+// функция удаления попапа по Esc
+var onPopupEscPress = function (evt) {
+  if (evt.keyCode === ESC_KEYCODE && popupCard) {
+    deletePopup();
+  }
+};
+
+// функция удаления попапа
+var deletePopup = function () {
+  popupCard.parentElement.removeChild(popupCard);
+  popupCard = null;
+  document.removeEventListener('keydown', onPopupEscPress);
+};
+
+// очищение карты от ранее отрисованной карточки-попапа
+var clearFromPrevPopup = function () {
+  if (popupCard) {
+    deletePopup();
+  }
+};
+
+// создаём массив объектов - входных данных для карточек объявлений
+var getDataList = function () {
+  var dataCards = [];
   for (var i = 0; i < OFFER_CARDS_QUANTITY; i++) {
     var currentLocation = getLocation();
-    offerCards[i] = {
+    dataCards[i] = {
       author: {
         avatar: avatars[i]
       },
@@ -129,30 +186,29 @@ var getOfferCardsList = function () {
       }
     };
   }
-  return offerCards;
+  return dataCards;
 };
-var offerCards = getOfferCardsList();
-
-// покажем основной блок разметки, в который будем вносить изменения
-map.classList.remove('map--faded');
 
 // создадим виртуальный контейнер для временного хранения создаваемых меток
 var fragment = document.createDocumentFragment();
 
 // создадим метки на основе массива входных данных
-var renderMapPins = function (cards) {
+var renderPins = function (cards) {
+  var mapPins = [];
   for (var i = 0; i < cards.length; i++) {
     var mapPinElement = mapPinTemplate.cloneNode(true);
     mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
     var mapPinImage = mapPinElement.querySelector('img');
     mapPinImage.src = cards[i].author.avatar;
     mapPinImage.alt = cards[i].offer.title;
-    fragment.appendChild(mapPinElement);
+    mapPins[i] = fragment.appendChild(mapPinElement);
   }
+
   // выгружаем разметку меток из шаблона в основную разметку
   mapPinsBlock.appendChild(fragment);
+
+  return mapPins;
 };
-renderMapPins(offerCards);
 
 // подготовим детали текста о вместимости предлагаемой недвижимости
 var getСapacityData = function (roomsNum, guestsNum) {
@@ -195,8 +251,8 @@ var setOfferPhotos = function (photos, offerCard) {
   }
 };
 
-// создадим DOM-элемент карточки объявления
-var setMapOfferCard = function (card) {
+// получение DOM-элемента карточки объявления
+var getPopupCard = function (card) {
   var mapCardElement = mapCardTemplate.cloneNode(true);
   var offerTitle = mapCardElement.querySelector('.popup__title');
   var offerAddress = mapCardElement.querySelector('.popup__text--address');
@@ -210,7 +266,6 @@ var setMapOfferCard = function (card) {
   var offerPhotos = mapCardElement.querySelector('.popup__photos');
   var offerAvatar = mapCardElement.querySelector('.popup__avatar');
 
-  // mapCardElement.classList.add('visually-hidden');
   offerTitle.textContent = card.offer.title;
   offerAddress.textContent = card.offer.address;
   offerPrice.textContent = card.offer.price + ' ₽/ночь';
@@ -223,34 +278,82 @@ var setMapOfferCard = function (card) {
   offerAvatar.src = card.author.avatar;
 
   // загрузим сформированную разметку во временное хранилище
-  var mapCardInFragment = fragment.appendChild(mapCardElement);
+  var popupInFragment = fragment.appendChild(mapCardElement);
 
   // выгружаем разметку объявления из временного хранилища в необходимое место в основной разметке
-  map.insertBefore(mapCardInFragment, mapFiltersContainer);
+  return map.insertBefore(popupInFragment, mapFiltersContainer);
 };
-setMapOfferCard(offerCards[0]);
 
-// var mapPin = map.querySelectorAll('.map__pin');
-// var mapCard = map.querySelectorAll('.map__card');
+// функция блокировки доступа к интерактивным элементам
+var setElementsDisable = function (elem) {
+  for (var i = 0; i < elem.children.length; i++) {
+    elem.children[i].disabled = 'disabled';
+  }
+};
 
-// слушаем клики по меткам объявлений и открываем объявления
-// for (i = 0; i < mapPin.length; i++) {
-//  mapPin[i].addEventListener('click', function (evt) {
-//    evt.preventDefault();
-//    mapCard[i].classList.remove('visually-hidden');
-//    if (!mapPin[i].classList.contains('map__pin--main')) {
-//      mapPin[i].classList.add('map__pin--active');
-//    }
-//  });
-// }
+// установим параметры начального неактивного состояния
+var setDefaultMode = function () {
+  // заблокируем доступ к полям в форме подачи объявления и в фильтре объявлений
+  setElementsDisable(adForm);
+  setElementsDisable(filterForm);
 
-// слушаем клики по кнопке закрытия и закрываем объявление
-// var mapCardClose = map.querySelectorAll('.popup__close');
-// for (i = 0; i < mapCard.length; i++) {
-//  mapCardClose[i].addEventListener('click', function (evt) {
-//    evt.preventDefault();
-//    if (!mapCard[i].classList.contains('visually-hidden')) {
-//      mapCard[i].classList.add('visually-hidden');
-//    }
-//  });
-// }
+  // поле адреса и начальные координаты дефолтной метки
+  addressInput.readOnly = true;
+  addressInput.value = DEFAULT_PIN_FADE_POSITION.x + ', ' + DEFAULT_PIN_FADE_POSITION.y;
+
+  defaultPin.draggable = 'true';
+};
+setDefaultMode();
+
+// функция активации карты и интерактивных полей
+var onDefaultPinDrag = function () {
+  // активируем карту
+  map.classList.remove('map--faded');
+
+  // разблокируем фильтры и форму заполнения объявления
+  for (var i = 0; i < filterForm.children.length; i++) {
+    filterForm.children[i].disabled = '';
+  }
+  adForm.classList.remove('ad-form--disabled');
+  for (i = 0; i < adForm.children.length; i++) {
+    adForm.children[i].disabled = '';
+  }
+
+  // установим начальные координаты дефолтной активированной метки
+  addressInput.value = DEFAULT_PIN_START_POSITION.x + ', ' + DEFAULT_PIN_START_POSITION.y;
+
+  // создадим базу данных
+  var dataCards = getDataList();
+
+  // выгрузим теги меток в основную разметку
+  var activePins = renderPins(dataCards);
+
+  // установим меткам обработчики кликов
+  var addPinsHandlers = function (pins, datas) {
+    for (i = 0; i < pins.length; i++) {
+      addPinsClickHandler(pins[i], datas[i]);
+    }
+  };
+  addPinsHandlers(activePins, dataCards);
+
+  // удалим обработчик клика по стартовой метке
+  defaultPin.removeEventListener('mouseup', onDefaultPinDrag);
+};
+
+// активируем карту и интерактивные поля
+defaultPin.addEventListener('mouseup', onDefaultPinDrag);
+
+// клик по метке связывает данные с получением и отрисовкой карточки объявления
+var addPinsClickHandler = function (pin, data) {
+  pin.addEventListener('click', function () {
+    deletePrevPinClass();
+    clearFromPrevPopup();
+    pin.classList.add('map__pin--active');
+    popupCard = getPopupCard(data);
+    document.addEventListener('keydown', onPopupEscPress);
+    var closeButton = popupCard.querySelector('.popup__close');
+    closeButton.addEventListener('click', function () {
+      deletePopup();
+    });
+  });
+};
