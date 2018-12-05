@@ -129,6 +129,14 @@ var getLocation = function () {
 
 var popupCard;
 
+// функция удаления класса у отработавшей метки
+var deletePrevPinClass = function () {
+  var prevPin = mapPinsBlock.querySelector('.map__pin--active');
+  if (prevPin) {
+    prevPin.classList.remove('map__pin--active');
+  }
+};
+
 // функция удаления попапа по Esc
 var onPopupEscPress = function (evt) {
   if (evt.keyCode === ESC_KEYCODE && popupCard) {
@@ -144,9 +152,8 @@ var deletePopup = function () {
 };
 
 // очищение карты от ранее отрисованной карточки-попапа
-var clearFromEarlierPopup = function () {
-  var popup = map.querySelector('.map__card');
-  if (popup) {
+var clearFromPrevPopup = function () {
+  if (popupCard) {
     deletePopup();
   }
 };
@@ -187,18 +194,20 @@ var fragment = document.createDocumentFragment();
 
 // создадим метки на основе массива входных данных
 var renderPins = function (cards) {
+  var mapPins = [];
   for (var i = 0; i < cards.length; i++) {
     var mapPinElement = mapPinTemplate.cloneNode(true);
     mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
     var mapPinImage = mapPinElement.querySelector('img');
     mapPinImage.src = cards[i].author.avatar;
     mapPinImage.alt = cards[i].offer.title;
-    fragment.appendChild(mapPinElement);
+    mapPins[i] = fragment.appendChild(mapPinElement);
   }
+
   // выгружаем разметку меток из шаблона в основную разметку
   mapPinsBlock.appendChild(fragment);
 
-  return mapPinsBlock.querySelectorAll('.map__pin:not(.map__pin--main)');
+  return mapPins;
 };
 
 // подготовим детали текста о вместимости предлагаемой недвижимости
@@ -275,27 +284,21 @@ var getPopupCard = function (card) {
   return map.insertBefore(popupInFragment, mapFiltersContainer);
 };
 
+// функция блокировки доступа к интерактивным элементам
+var setElementsDisable = function (elem) {
+  for (var i = 0; i < elem.children.length; i++) {
+    elem.children[i].disabled = 'disabled';
+  }
+};
+
 // установим параметры начального неактивного состояния
 var setDefaultMode = function () {
-  // заблокируем доступ к полям в форме подачи объявления
-  var blockAdd = function (add) {
-    for (var i = 0; i < add.children.length; i++) {
-      add.children[i].disabled = 'disabled';
-    }
-  };
-
-  // заблокируем доступ к полям в форме фильтрации
-  var blockFilter = function (filter) {
-    for (var i = 0; i < filter.children.length; i++) {
-      filter.children[i].disabled = 'disabled';
-    }
-  };
-
-  blockAdd(adForm);
-  blockFilter(filterForm);
+  // заблокируем доступ к полям в форме подачи объявления и в фильтре объявлений
+  setElementsDisable(adForm);
+  setElementsDisable(filterForm);
 
   // поле адреса и начальные координаты дефолтной метки
-  addressInput.disabled = 'readonly';
+  addressInput.readOnly = true;
   addressInput.value = DEFAULT_PIN_FADE_POSITION.x + ', ' + DEFAULT_PIN_FADE_POSITION.y;
 
   defaultPin.draggable = 'true';
@@ -343,12 +346,14 @@ defaultPin.addEventListener('mouseup', onDefaultPinDrag);
 // клик по метке связывает данные с получением и отрисовкой карточки объявления
 var addPinsClickHandler = function (pin, data) {
   pin.addEventListener('click', function () {
-    clearFromEarlierPopup();
+    deletePrevPinClass();
+    clearFromPrevPopup();
+    pin.classList.add('map__pin--active');
     popupCard = getPopupCard(data);
     document.addEventListener('keydown', onPopupEscPress);
     var closeButton = popupCard.querySelector('.popup__close');
     closeButton.addEventListener('click', function () {
-      deletePopup(popupCard);
+      deletePopup();
     });
   });
 };
