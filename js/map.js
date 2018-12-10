@@ -39,6 +39,18 @@ var FEATURES_CLASSES = {
   conditioner: 'popup__feature--conditioner'
 };
 var ESC_KEYCODE = 27;
+var MIN_DEFAULT_PIN_PACE = 5;
+var PRICE_FIELD_MIN = {
+  bungalo: 0,
+  flat: 1000,
+  house: 5000,
+  palace: 10000
+};
+
+var popupCard;
+var startCoords = {};
+var defaultPinCurrentPosition = {};
+var dragged = false;
 
 // адреса аватарок
 var avatars = ['img/avatars/user01.png', 'img/avatars/user02.png', 'img/avatars/user03.png', 'img/avatars/user04.png', 'img/avatars/user05.png', 'img/avatars/user06.png', 'img/avatars/user07.png', 'img/avatars/user08.png'];
@@ -82,7 +94,10 @@ var filterForm = document.querySelector('.map__filters');
 var adForm = document.querySelector('.ad-form');
 
 // найдём поле адреса
-var addressInput = document.querySelector('#address');
+var addressInputField = document.querySelector('#address');
+
+// создадим виртуальный контейнер для временного хранения создаваемых элементов
+var fragment = document.createDocumentFragment();
 
 // генератор случайных чисел в диапазоне
 var getRandomNum = function (min, max) {
@@ -126,8 +141,6 @@ var getLocation = function () {
   var location = [x, y];
   return location;
 };
-
-var popupCard;
 
 // функция удаления класса у отработавшей метки
 var deletePrevPinClass = function () {
@@ -188,9 +201,6 @@ var getDataList = function () {
   }
   return dataCards;
 };
-
-// создадим виртуальный контейнер для временного хранения создаваемых меток
-var fragment = document.createDocumentFragment();
 
 // создадим метки на основе массива входных данных
 var renderPins = function (cards) {
@@ -298,46 +308,97 @@ var setDefaultMode = function () {
   setElementsDisable(filterForm);
 
   // поле адреса и начальные координаты дефолтной метки
-  addressInput.readOnly = true;
-  addressInput.value = DEFAULT_PIN_FADE_POSITION.x + ', ' + DEFAULT_PIN_FADE_POSITION.y;
+  addressInputField.readOnly = true;
+  addressInputField.value = DEFAULT_PIN_FADE_POSITION.x + ', ' + DEFAULT_PIN_FADE_POSITION.y;
 
   defaultPin.draggable = 'true';
 };
 setDefaultMode();
 
+// обработчик передвижения мыши фиксирует координаты стартовой метки в окне адреса
+var onMouseMove = function (moveEvt) {
+  moveEvt.preventDefault();
+
+  var shift = {
+    x: startCoords.x - moveEvt.clientX,
+    y: startCoords.y - moveEvt.clientY
+  };
+
+  startCoords = {
+    x: moveEvt.clientX,
+    y: moveEvt.clientY
+  };
+
+  defaultPin.style.top = (defaultPin.offsetTop - shift.y) + 'px';
+  defaultPin.style.left = (defaultPin.offsetLeft - shift.x) + 'px';
+
+  // устанавливаем текущее положение стартовой метки в поле адреса
+  defaultPinCurrentPosition.x = Math.round((defaultPin.offsetLeft - shift.x) + DEFAULT_PIN_WIDTH / 2);
+  defaultPinCurrentPosition.y = (defaultPin.offsetTop - shift.y) + DEFAULT_PIN_ACTIVE_HEIGHT;
+  addressInputField.value = defaultPinCurrentPosition.x + ', ' + defaultPinCurrentPosition.y;
+
+  // запишем путь, пройденный стартовой меткой
+  var defaultPinPaceX = defaultPinCurrentPosition.x - DEFAULT_PIN_START_POSITION.x;
+  var defaultPinPaceY = defaultPinCurrentPosition.y - DEFAULT_PIN_START_POSITION.y;
+
+  if (Math.abs(defaultPinPaceX) > MIN_DEFAULT_PIN_PACE || Math.abs(defaultPinPaceY) > MIN_DEFAULT_PIN_PACE) {
+    dragged = true;
+  }
+};
+
+// перетаскивание стартовой метки
+defaultPin.addEventListener('mousedown', function (evt) {
+  evt.preventDefault();
+
+  startCoords = {
+    x: evt.clientX,
+    y: evt.clientY
+  };
+
+  var onMouseUp = function (upEvt) {
+    upEvt.preventDefault();
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+});
+
 // функция активации карты и интерактивных полей
 var onDefaultPinDrag = function () {
-  // активируем карту
-  map.classList.remove('map--faded');
+  if (dragged) {
+    // активируем карту
+    map.classList.remove('map--faded');
 
-  // разблокируем фильтры и форму заполнения объявления
-  for (var i = 0; i < filterForm.children.length; i++) {
-    filterForm.children[i].disabled = '';
-  }
-  adForm.classList.remove('ad-form--disabled');
-  for (i = 0; i < adForm.children.length; i++) {
-    adForm.children[i].disabled = '';
-  }
-
-  // установим начальные координаты дефолтной активированной метки
-  addressInput.value = DEFAULT_PIN_START_POSITION.x + ', ' + DEFAULT_PIN_START_POSITION.y;
-
-  // создадим базу данных
-  var dataCards = getDataList();
-
-  // выгрузим теги меток в основную разметку
-  var activePins = renderPins(dataCards);
-
-  // установим меткам обработчики кликов
-  var addPinsHandlers = function (pins, datas) {
-    for (i = 0; i < pins.length; i++) {
-      addPinsClickHandler(pins[i], datas[i]);
+    // разблокируем фильтры и форму заполнения объявления
+    for (var i = 0; i < filterForm.children.length; i++) {
+      filterForm.children[i].disabled = '';
     }
-  };
-  addPinsHandlers(activePins, dataCards);
+    adForm.classList.remove('ad-form--disabled');
+    for (i = 0; i < adForm.children.length; i++) {
+      adForm.children[i].disabled = '';
+    }
 
-  // удалим обработчик клика по стартовой метке
-  defaultPin.removeEventListener('mouseup', onDefaultPinDrag);
+    // создадим базу данных
+    var dataCards = getDataList();
+
+    // выгрузим теги меток в основную разметку
+    var activePins = renderPins(dataCards);
+
+    // установим меткам обработчики кликов
+    var addPinsHandlers = function (pins, datas) {
+      for (i = 0; i < pins.length; i++) {
+        addPinsClickHandler(pins[i], datas[i]);
+      }
+    };
+
+    addPinsHandlers(activePins, dataCards);
+
+    // удалим обработчик клика по стартовой метке
+    defaultPin.removeEventListener('mouseup', onDefaultPinDrag);
+  }
 };
 
 // активируем карту и интерактивные поля
@@ -357,3 +418,200 @@ var addPinsClickHandler = function (pin, data) {
     });
   });
 };
+
+// найдём поле ввода заголовка объявления
+var titleField = adForm.querySelector('#title');
+
+// сообщим об ошибке ввода в поле заголовка объявления
+titleField.addEventListener('invalid', function () {
+  if (titleField.validity.tooShort) {
+    titleField.setCustomValidity('Длина заголовка должна быть более 30 символов');
+  } else if (titleField.validity.tooLong) {
+    titleField.setCustomValidity('Длина заголовка не должна превышать 100 символов');
+  } else if (titleField.validity.valueMissing) {
+    titleField.setCustomValidity('Обязательное поле');
+  } else {
+    titleField.setCustomValidity('');
+  }
+});
+
+// найдём поля ввода цены и выбора типа жилья
+var priceField = adForm.querySelector('#price');
+var typeField = adForm.querySelector('#type');
+
+// обработчик изменения значения поля типа жилья
+var onTypeFieldChange = function () {
+  for (var i = 0; i < typeField.children.length; i++) {
+    if (typeField.children[i].selected) {
+      var housingType = typeField.children[i].value;
+      priceField.min = PRICE_FIELD_MIN[housingType];
+      priceField.placeholder = PRICE_FIELD_MIN[housingType];
+    }
+  }
+};
+// установим зависимость минимальной цены от типа жилья
+typeField.addEventListener('change', onTypeFieldChange);
+
+// сообщим об ошибке ввода в поле цены
+priceField.addEventListener('invalid', function () {
+  if (priceField.validity.rangeUnderflow) {
+    priceField.setCustomValidity('Цена должна быть больше указанной  минимальной цены, соответствующей типу жилья');
+  } else if (priceField.validity.rangeOverflow) {
+    priceField.setCustomValidity('Цена не должна превышать 1 000 000 руб.');
+  } else if (priceField.validity.valueMissing) {
+    priceField.setCustomValidity('Обязательное поле');
+  } else {
+    priceField.setCustomValidity('');
+  }
+});
+
+// найдём поля ввода времени заезда и выезда
+var timeInField = adForm.querySelector('#timein');
+var timeOutField = adForm.querySelector('#timeout');
+
+// обработчик изменений в поле времени заезда
+var onTimeInFieldChange = function () {
+  for (var i = 0; i < timeInField.children.length; i++) {
+    if (timeInField.children[i].selected) {
+      timeOutField.children[i].selected = true;
+    }
+  }
+};
+
+// обработчик изменений в поле времени выезда
+var onTimeOutFieldChange = function () {
+  for (var i = 0; i < timeOutField.children.length; i++) {
+    if (timeOutField.children[i].selected) {
+      timeInField.children[i].selected = true;
+    }
+  }
+};
+
+// синхронизируем полей времени заезда и выезда
+timeInField.addEventListener('change', onTimeInFieldChange);
+timeOutField.addEventListener('change', onTimeOutFieldChange);
+
+
+// ПЕРВЫЙ ВАРИАНТ
+// найдём поля ввода количества комнат и гостей
+var roomsField = adForm.querySelector('#room_number');
+var guestsField = adForm.querySelector('#capacity');
+
+// функция обновления доступности всех опций поля выбора (комнат и мест)
+var updateElementsAccessibility = function (field) {
+  for (var i = 0; i < field.children.length; i++) {
+    field.children[i].disabled = false;
+  }
+};
+
+// обработчик изменений в поле ввода количества комнат
+var onRoomsFieldChange = function () {
+  var selectedRoomsIndex = roomsField.selectedIndex;
+  var lastElementIndex = roomsField.children.length - 1;
+
+  // обновляем доступность всех опций
+  updateElementsAccessibility(guestsField);
+  updateElementsAccessibility(roomsField);
+
+  // связываем друг с другом последние опции полей ввода комнат и гостей
+  if (selectedRoomsIndex === lastElementIndex) {
+    guestsField.children[selectedRoomsIndex].selected = true;
+    // запрещаем доступ к остальным опциям поля количества гостей
+    for (var i = 0; i < lastElementIndex; i++) {
+      guestsField.children[i].disabled = true;
+    }
+  }
+
+  // связываем остальные опции полей количества комнат и гостей
+  // Переберём элементы поля выбора комнат
+  for (i = 0; i < lastElementIndex; i++) {
+    // если текущий элемент поля комнат выбран, то выбираем элемент поля гостей с таким же значением
+    if (roomsField.children[selectedRoomsIndex].value === guestsField.children[i].value) {
+      guestsField.children[i].selected = true;
+      // закрываем доступ к элементам выбора количества гостей, меньшим текущего выбранного элемента
+      for (var j = i - 1; j >= 0; j--) {
+        guestsField.children[j].disabled = true;
+      }
+      guestsField.children[lastElementIndex].disabled = true;
+    }
+  }
+};
+
+// обработчик изменений в поле ввода количества гостей
+var onGuestsFieldChange = function () {
+  var selectedGuestsIndex = guestsField.selectedIndex;
+  var lastElementIndex = guestsField.children.length - 1;
+
+  // обновляем доступность всех опций количества гостей
+  updateElementsAccessibility(roomsField);
+
+  // связываем друг с другом последние опции полей ввода комнат и гостей
+  if (selectedGuestsIndex === lastElementIndex) {
+    roomsField.children[selectedGuestsIndex].selected = true;
+    // все опции поля количества комнат остаются доступны
+    updateElementsAccessibility(roomsField);
+  }
+  // связываем остальные опции полей количества комнат и гостей
+  // Переберём элементы поля количества гостей
+  for (var i = 0; i < lastElementIndex; i++) {
+    // если текущий элемент поля гостей выбран, то:
+    if (guestsField.children[i].selected) {
+      // объявляем вспомогательную переменную, регистрирующую минимальный индекс доступных элементов поля выбора комнат
+      var minAvailableRoomsIndex = lastElementIndex - 1 - i;
+      // запрещаем доступ к элементам поля комнат с меньшим индексом
+      for (var j = 0; j < minAvailableRoomsIndex; j++) {
+        roomsField.children[j].disabled = true;
+      }
+    }
+  }
+};
+
+// синхронизируем поле ввода количества гостей с полем количества комнат
+roomsField.addEventListener('change', onRoomsFieldChange);
+
+// синхронизируем поле количества комнат с полем количества гостей
+guestsField.addEventListener('change', onGuestsFieldChange);
+
+
+//  ВТОРОЙ ВАРИАНТ
+// Введём функцию, описывающую логику взаимосвязи полей ввода количества комнат и количества мест, регистрирующую валидность поля выбора количества мест
+var getGuestsFieldValidity = function () {
+  // введём переменную, регистрирующую валидность поля выбора количества мест
+  var currentGuestsFieldValidity = false;
+
+  // Если выбраны последние элементы, то
+  var lastElementIndex = guestsField.children.length - 1;
+  if (roomsField.children[lastElementIndex].selected && guestsField.children[lastElementIndex].selected) {
+    currentGuestsFieldValidity = true;
+
+    return currentGuestsFieldValidity;
+  }
+
+  // Переберём элементы поля выбора комнат
+  for (var i = 0; i < lastElementIndex; i++) {
+    // если текущий элемент поля комнат выбран, то
+    if (roomsField.children[i].selected) {
+      // введём перменную, создающую обратную зависимость начала прохождения внутреннего цикла от порядкового номера итерации внешнего цикла
+      var innerCycleStarter = lastElementIndex - 1 - i;
+      // Перебираем массив поля выбора количества мест без последнего[3] элемента, начиная с предпоследнего[2], при этом на каждой следующей итерации внешнего цикла будем уменьшать начало отсчёта на один элемент
+      for (var j = innerCycleStarter; j < lastElementIndex && j >= 0; j++) {
+        if (guestsField.children[j].selected) {
+          currentGuestsFieldValidity = true;
+          return currentGuestsFieldValidity;
+        }
+      }
+    }
+  }
+
+  return currentGuestsFieldValidity;
+};
+var guestsFieldValidity = getGuestsFieldValidity();
+
+// guestsField.addEventListener('change', getGuestsFieldValidity);
+// roomsField.addEventListener('change', getGuestsFieldValidity);
+
+guestsField.addEventListener('invalid', function () {
+  if (!guestsFieldValidity) {
+    guestsField.setCustomValidity('На 1 гостя должно приходиться не менее 1 комнаты');
+  }
+});
