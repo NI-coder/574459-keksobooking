@@ -487,131 +487,78 @@ var onTimeOutFieldChange = function () {
   }
 };
 
-// синхронизируем полей времени заезда и выезда
+// синхронизируем поля времени заезда и выезда
 timeInField.addEventListener('change', onTimeInFieldChange);
 timeOutField.addEventListener('change', onTimeOutFieldChange);
 
 
-// ПЕРВЫЙ ВАРИАНТ
+// Введём объект, описывающий допустимые значения поля количества мест, зависяших от значений поля количества комнат
+var roomsAmount = {
+  1: {
+    permitted: ['1'],
+    textError: 'не более одного гостя'
+  },
+  2: {
+    permitted: ['1', '2'],
+    textError: 'не более двух гостей'
+  },
+  3: {
+    permitted: ['1', '2', '3'],
+    textError: 'не более трёх гостей'
+  },
+  100: {
+    permitted: ['0'],
+    textError: 'не для гостей'
+  }
+};
+
 // найдём поля ввода количества комнат и гостей
 var roomsField = adForm.querySelector('#room_number');
 var guestsField = adForm.querySelector('#capacity');
 
-// функция обновления доступности всех опций поля выбора (комнат и мест)
-var updateElementsAccessibility = function (field) {
-  for (var i = 0; i < field.children.length; i++) {
-    field.children[i].disabled = false;
-  }
-};
-
-// обработчик изменений в поле ввода количества комнат
-var onRoomsFieldChange = function () {
-  var selectedRoomsIndex = roomsField.selectedIndex;
-  var lastElementIndex = roomsField.children.length - 1;
-
-  // обновляем доступность всех опций
-  updateElementsAccessibility(guestsField);
-  updateElementsAccessibility(roomsField);
-
-  // связываем друг с другом последние опции полей ввода комнат и гостей
-  if (selectedRoomsIndex === lastElementIndex) {
-    guestsField.children[selectedRoomsIndex].selected = true;
-    // запрещаем доступ к остальным опциям поля количества гостей
-    for (var i = 0; i < lastElementIndex; i++) {
-      guestsField.children[i].disabled = true;
-    }
-  }
-
-  // связываем остальные опции полей количества комнат и гостей
-  // Переберём элементы поля выбора комнат
-  for (i = 0; i < lastElementIndex; i++) {
-    // если текущий элемент поля комнат выбран, то выбираем элемент поля гостей с таким же значением
-    if (roomsField.children[selectedRoomsIndex].value === guestsField.children[i].value) {
-      guestsField.children[i].selected = true;
-      // закрываем доступ к элементам выбора количества гостей, меньшим текущего выбранного элемента
-      for (var j = i - 1; j >= 0; j--) {
-        guestsField.children[j].disabled = true;
-      }
-      guestsField.children[lastElementIndex].disabled = true;
-    }
-  }
-};
-
-// обработчик изменений в поле ввода количества гостей
-var onGuestsFieldChange = function () {
-  var selectedGuestsIndex = guestsField.selectedIndex;
-  var lastElementIndex = guestsField.children.length - 1;
-
-  // обновляем доступность всех опций количества гостей
-  updateElementsAccessibility(roomsField);
-
-  // связываем друг с другом последние опции полей ввода комнат и гостей
-  if (selectedGuestsIndex === lastElementIndex) {
-    roomsField.children[selectedGuestsIndex].selected = true;
-    // все опции поля количества комнат остаются доступны
-    updateElementsAccessibility(roomsField);
-  }
-  // связываем остальные опции полей количества комнат и гостей
-  // Переберём элементы поля количества гостей
-  for (var i = 0; i < lastElementIndex; i++) {
-    // если текущий элемент поля гостей выбран, то:
-    if (guestsField.children[i].selected) {
-      // объявляем вспомогательную переменную, регистрирующую минимальный индекс доступных элементов поля выбора комнат
-      var minAvailableRoomsIndex = lastElementIndex - 1 - i;
-      // запрещаем доступ к элементам поля комнат с меньшим индексом
-      for (var j = 0; j < minAvailableRoomsIndex; j++) {
-        roomsField.children[j].disabled = true;
-      }
-    }
-  }
-};
-
-// синхронизируем поле ввода количества гостей с полем количества комнат
-roomsField.addEventListener('change', onRoomsFieldChange);
-
-// синхронизируем поле количества комнат с полем количества гостей
-guestsField.addEventListener('change', onGuestsFieldChange);
-
-
-//  ВТОРОЙ ВАРИАНТ
-// Введём функцию, описывающую логику взаимосвязи полей ввода количества комнат и количества мест, регистрирующую валидность поля выбора количества мест
+// Введём функцию, регистрирующую валидность поля выбора количества мест
 var getGuestsFieldValidity = function () {
   // введём переменную, регистрирующую валидность поля выбора количества мест
   var currentGuestsFieldValidity = false;
-
-  // Если выбраны последние элементы, то
-  var lastElementIndex = guestsField.children.length - 1;
-  if (roomsField.children[lastElementIndex].selected && guestsField.children[lastElementIndex].selected) {
-    currentGuestsFieldValidity = true;
-
-    return currentGuestsFieldValidity;
-  }
-
-  // Переберём элементы поля выбора комнат
-  for (var i = 0; i < lastElementIndex; i++) {
-    // если текущий элемент поля комнат выбран, то
+  var textGuestsError = '';
+  var selectedGuestsIndex = guestsField.selectedIndex;
+  var selectedGuestsValue = guestsField.children[selectedGuestsIndex].value;
+  // Переберём элементы поля выбора количества комнат
+  for (var i = 0; i < roomsField.children.length; i++) {
+    // Если текущий элемент выбран,
     if (roomsField.children[i].selected) {
-      // введём перменную, создающую обратную зависимость начала прохождения внутреннего цикла от порядкового номера итерации внешнего цикла
-      var innerCycleStarter = lastElementIndex - 1 - i;
-      // Перебираем массив поля выбора количества мест без последнего[3] элемента, начиная с предпоследнего[2], при этом на каждой следующей итерации внешнего цикла будем уменьшать начало отсчёта на один элемент
-      for (var j = innerCycleStarter; j < lastElementIndex && j >= 0; j++) {
-        if (guestsField.children[j].selected) {
-          currentGuestsFieldValidity = true;
-          return currentGuestsFieldValidity;
-        }
+    // то значение поля количества мест должно входить в массив значений свойства объекта roomsAmount. При этом это свойство должно быть равно roomsField.children[i].value
+      var currentRoomsValue = roomsField.children[i].value;
+      var validityIndex = roomsAmount[currentRoomsValue].permitted.indexOf(selectedGuestsValue);
+      // Если значение присутствует в соответствующем массиве объекта roomsAmount, то validityIndex будет неравен -1
+      if (validityIndex !== -1) {
+        currentGuestsFieldValidity = true;
+      } else {
+        textGuestsError = roomsAmount[currentRoomsValue].textError;
       }
+      return {
+        validityStatus: currentGuestsFieldValidity,
+        textError: textGuestsError
+      };
     }
   }
 
-  return currentGuestsFieldValidity;
+  return {
+    validityStatus: currentGuestsFieldValidity,
+    textError: textGuestsError
+  };
 };
-var guestsFieldValidity = getGuestsFieldValidity();
 
 // guestsField.addEventListener('change', getGuestsFieldValidity);
 // roomsField.addEventListener('change', getGuestsFieldValidity);
 
-guestsField.addEventListener('invalid', function () {
-  if (!guestsFieldValidity) {
-    guestsField.setCustomValidity('На 1 гостя должно приходиться не менее 1 комнаты');
+// найдём кнопку отправки формы
+var adFormSubmitButton = adForm.querySelector('.ad-form__submit');
+
+adFormSubmitButton.addEventListener('submit', function (evt) {
+  var guestsFieldValidity = getGuestsFieldValidity();
+  if (!guestsFieldValidity.validityStatus) {
+    evt.preventDefault();
+    guestsField.setCustomValidity(guestsFieldValidity.textError);
   }
 });
