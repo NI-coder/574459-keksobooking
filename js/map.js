@@ -14,6 +14,7 @@ var DEFAULT_PIN_START_POSITION = {
   x: Math.round(DEFAULT_PIN_X + DEFAULT_PIN_WIDTH / 2),
   y: Math.round(DEFAULT_PIN_Y + DEFAULT_PIN_ACTIVE_HEIGHT)
 };
+var MIN_ACTIVE_PIN_INDEX = 2;
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
 var MIN_X = 0;
@@ -69,6 +70,26 @@ var initialPhotos = [
   'http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'
 ];
 
+// Введём словарь, описывающий допустимые значения поля количества гостей, зависяших от значений поля количества комнат
+var roomsToGuestsAmount = {
+  1: {
+    permitted: ['1'],
+    textError: 'только для одного гостя'
+  },
+  2: {
+    permitted: ['1', '2'],
+    textError: 'для двух и менее гостей'
+  },
+  3: {
+    permitted: ['1', '2', '3'],
+    textError: 'для трёх и менее гостей'
+  },
+  100: {
+    permitted: ['0'],
+    textError: 'не для гостей'
+  }
+};
+
 // найдём основной блок разметки, в который будем вносить изменения
 var map = document.querySelector('.map');
 
@@ -98,6 +119,28 @@ var addressInputField = document.querySelector('#address');
 
 // создадим виртуальный контейнер для временного хранения создаваемых элементов
 var fragment = document.createDocumentFragment();
+
+// найдём поле вставки аватара пользователя
+var avatarField = adForm.querySelector('#avatar');
+// найдём поле ввода заголовка объявления
+var titleField = adForm.querySelector('#title');
+// найдём поля ввода цены и выбора типа жилья
+var typeField = adForm.querySelector('#type');
+var priceField = adForm.querySelector('#price');
+// найдём поля ввода времени заезда и выезда
+var timeInField = adForm.querySelector('#timein');
+var timeOutField = adForm.querySelector('#timeout');
+// найдём поля ввода количества комнат и гостей
+var roomsField = adForm.querySelector('#room_number');
+var guestsField = adForm.querySelector('#capacity');
+// найдём чекбоксы дополнительных удобств
+var featureCheckboxes = adForm.querySelectorAll('.feature__checkbox');
+// найдём поле дополнительного описания объекта
+var descriptionField = adForm.querySelector('#description');
+// найдём поле фотографий жилья
+var imagesField = adForm.querySelector('#images');
+// Найдём кнопку очистки формы и возврата к первоначальному неактивному состоянию страницы
+var pageResetButton = adForm.querySelector('.ad-form__reset');
 
 // генератор случайных чисел в диапазоне
 var getRandomNum = function (min, max) {
@@ -344,6 +387,7 @@ var onMouseMove = function (moveEvt) {
   if (Math.abs(defaultPinPaceX) > MIN_DEFAULT_PIN_PACE || Math.abs(defaultPinPaceY) > MIN_DEFAULT_PIN_PACE) {
     dragged = true;
   }
+  return dragged;
 };
 
 // перетаскивание стартовой метки
@@ -368,7 +412,7 @@ defaultPin.addEventListener('mousedown', function (evt) {
 
 // функция активации карты и интерактивных полей
 var onDefaultPinDrag = function () {
-  if (dragged) {
+  if (dragged) { // результат работы onMouseMove()
     // активируем карту
     map.classList.remove('map--faded');
 
@@ -419,28 +463,41 @@ var addPinsClickHandler = function (pin, data) {
   });
 };
 
-// найдём поле ввода заголовка объявления
-var titleField = adForm.querySelector('#title');
+// функция стилизации полей с ошибкой ввода
+var renderErrorFieldsStyle = function (field, isError) {
+  if (isError) {
+    field.style.borderColor = 'red';
+    field.style.borderWidth = '5px';
+  } else {
+    field.style.borderColor = '';
+    field.style.borderWidth = '';
+  }
+};
 
-// сообщим об ошибке ввода в поле заголовка объявления
-titleField.addEventListener('invalid', function () {
+// Обработчик ошибки ввода в поле заголовка
+var onTitleFieldWrongInput = function () {
+  var errorStatus = false;
   if (titleField.validity.tooShort) {
     titleField.setCustomValidity('Длина заголовка должна быть более 30 символов');
+    errorStatus = true;
+    renderErrorFieldsStyle(titleField, errorStatus);
   } else if (titleField.validity.tooLong) {
     titleField.setCustomValidity('Длина заголовка не должна превышать 100 символов');
+    errorStatus = true;
+    renderErrorFieldsStyle(titleField, errorStatus);
   } else if (titleField.validity.valueMissing) {
     titleField.setCustomValidity('Обязательное поле');
+    errorStatus = true;
+    renderErrorFieldsStyle(titleField, errorStatus);
   } else {
     titleField.setCustomValidity('');
+    renderErrorFieldsStyle(titleField, errorStatus);
   }
-});
+  return errorStatus;
+};
 
-// найдём поля ввода цены и выбора типа жилья
-var priceField = adForm.querySelector('#price');
-var typeField = adForm.querySelector('#type');
-
-// обработчик изменения значения поля типа жилья
-var onTypeFieldChange = function () {
+// установим зависимость минимальной цены от типа жилья
+var getMinPriceFromType = function () {
   for (var i = 0; i < typeField.children.length; i++) {
     if (typeField.children[i].selected) {
       var housingType = typeField.children[i].value;
@@ -449,25 +506,37 @@ var onTypeFieldChange = function () {
     }
   }
 };
-// установим зависимость минимальной цены от типа жилья
-typeField.addEventListener('change', onTypeFieldChange);
 
-// сообщим об ошибке ввода в поле цены
-priceField.addEventListener('invalid', function () {
+// Обработчик ошибки ввода в поле цены
+var onPriceFieldWrongInput = function () {
+  var errorStatus = false;
+  if (priceField.placeholder <= priceField.value) {
+    errorStatus = false;
+  }
   if (priceField.validity.rangeUnderflow) {
     priceField.setCustomValidity('Цена должна быть больше указанной  минимальной цены, соответствующей типу жилья');
+    errorStatus = true;
+    renderErrorFieldsStyle(priceField, errorStatus);
   } else if (priceField.validity.rangeOverflow) {
     priceField.setCustomValidity('Цена не должна превышать 1 000 000 руб.');
+    errorStatus = true;
+    renderErrorFieldsStyle(priceField, errorStatus);
   } else if (priceField.validity.valueMissing) {
     priceField.setCustomValidity('Обязательное поле');
+    errorStatus = true;
+    renderErrorFieldsStyle(priceField, errorStatus);
   } else {
     priceField.setCustomValidity('');
+    renderErrorFieldsStyle(priceField, errorStatus);
   }
-});
+  return errorStatus;
+};
 
-// найдём поля ввода времени заезда и выезда
-var timeInField = adForm.querySelector('#timein');
-var timeOutField = adForm.querySelector('#timeout');
+// Обработчик изменений в поле типа жилья синхронизован с сообщениями об ошибке в поле цены
+var onTypeFieldChange = function () {
+  getMinPriceFromType();
+  onPriceFieldWrongInput();
+};
 
 // обработчик изменений в поле времени заезда
 var onTimeInFieldChange = function () {
@@ -487,38 +556,8 @@ var onTimeOutFieldChange = function () {
   }
 };
 
-// синхронизируем поля времени заезда и выезда
-timeInField.addEventListener('change', onTimeInFieldChange);
-timeOutField.addEventListener('change', onTimeOutFieldChange);
-
-
-// Введём объект, описывающий допустимые значения поля количества мест, зависяших от значений поля количества комнат
-var roomsAmount = {
-  1: {
-    permitted: ['1'],
-    textError: 'не более одного гостя'
-  },
-  2: {
-    permitted: ['1', '2'],
-    textError: 'не более двух гостей'
-  },
-  3: {
-    permitted: ['1', '2', '3'],
-    textError: 'не более трёх гостей'
-  },
-  100: {
-    permitted: ['0'],
-    textError: 'не для гостей'
-  }
-};
-
-// найдём поля ввода количества комнат и гостей
-var roomsField = adForm.querySelector('#room_number');
-var guestsField = adForm.querySelector('#capacity');
-
 // Введём функцию, регистрирующую валидность поля выбора количества мест
 var getGuestsFieldValidity = function () {
-  // введём переменную, регистрирующую валидность поля выбора количества мест
   var currentGuestsFieldValidity = false;
   var textGuestsError = '';
   var selectedGuestsIndex = guestsField.selectedIndex;
@@ -527,14 +566,15 @@ var getGuestsFieldValidity = function () {
   for (var i = 0; i < roomsField.children.length; i++) {
     // Если текущий элемент выбран,
     if (roomsField.children[i].selected) {
-    // то значение поля количества мест должно входить в массив значений свойства объекта roomsAmount. При этом это свойство должно быть равно roomsField.children[i].value
+      // Свойство объекта roomsAmount должно быть равно текущему значению поля выбора комнат.
       var currentRoomsValue = roomsField.children[i].value;
-      var validityIndex = roomsAmount[currentRoomsValue].permitted.indexOf(selectedGuestsValue);
-      // Если значение присутствует в соответствующем массиве объекта roomsAmount, то validityIndex будет неравен -1
+      // Значение поля количества мест должно входить в массив значений свойства объекта roomsAmount.
+      var validityIndex = roomsToGuestsAmount[currentRoomsValue].permitted.indexOf(selectedGuestsValue);
+      // Если значение отсутствует в соответствующем массиве объекта roomsAmount, то validityIndex будет равен -1, а само значение недопустимо
       if (validityIndex !== -1) {
         currentGuestsFieldValidity = true;
       } else {
-        textGuestsError = roomsAmount[currentRoomsValue].textError;
+        textGuestsError = roomsToGuestsAmount[currentRoomsValue].textError;
       }
       return {
         validityStatus: currentGuestsFieldValidity,
@@ -549,16 +589,122 @@ var getGuestsFieldValidity = function () {
   };
 };
 
-// guestsField.addEventListener('change', getGuestsFieldValidity);
-// roomsField.addEventListener('change', getGuestsFieldValidity);
-
-// найдём кнопку отправки формы
-var adFormSubmitButton = adForm.querySelector('.ad-form__submit');
-
-adFormSubmitButton.addEventListener('submit', function (evt) {
+// Обработчик изменений в полях комнат и гостей сообщает об ошибке ввода при её наличии
+var onGuestAndRoomsChange = function () {
   var guestsFieldValidity = getGuestsFieldValidity();
+  var errorStatus = false;
   if (!guestsFieldValidity.validityStatus) {
-    evt.preventDefault();
     guestsField.setCustomValidity(guestsFieldValidity.textError);
+    errorStatus = true;
+    renderErrorFieldsStyle(guestsField, errorStatus);
+  } else {
+    guestsField.setCustomValidity('');
+    renderErrorFieldsStyle(guestsField, errorStatus);
   }
-});
+  return errorStatus;
+};
+
+var resetPage = function () {
+  // дезактивируем карту
+  map.classList.add('map--faded');
+
+  // заблокируем фильтры и форму заполнения объявления
+  for (var i = 0; i < filterForm.children.length; i++) {
+    filterForm.children[i].disabled = 'disabled';
+  }
+  adForm.classList.add('ad-form--disabled');
+  for (i = 0; i < adForm.children.length; i++) {
+    adForm.children[i].disabled = 'disabled';
+  }
+
+  // удалим теги меток из разметки
+  while (mapPinsBlock.children.length > MIN_ACTIVE_PIN_INDEX) {
+    mapPinsBlock.children[MIN_ACTIVE_PIN_INDEX].remove();
+  }
+
+  // удалим из разметки DOM-элемент отрисованной карточки объявления
+  var shownCard = map.querySelector('.map__card');
+  if (shownCard) {
+    deletePopup();
+  }
+
+  // установим параметры начального неактивного состояния фильтрам и форме объявления
+  setDefaultMode();
+
+  // обнулим значения полей до дефолтного состояния
+  avatarField.value = '';
+  titleField.value = '';
+  titleField.style.border = '';
+  typeField.value = 'flat';
+  priceField.value = '';
+  priceField.placeholder = '1000';
+  priceField.style.border = '';
+  timeInField.value = '12:00';
+  timeOutField.value = '12:00';
+  roomsField.value = '3';
+  guestsField.value = '1';
+  guestsField.style.border = '';
+  featureCheckboxes.forEach(function (feature) {
+    feature.checked = false;
+  });
+  descriptionField.value = '';
+  descriptionField.placeholder = 'Здесь расскажите о том, какое ваше жилье замечательное и вообще';
+  imagesField.value = '';
+
+
+  // вернём начальные координаты дефолтной метке
+  defaultPin.style.left = '570px';
+  defaultPin.style.top = '375px';
+
+  // добавим возможность повторной активации карты и интерактивных полей
+  defaultPin.addEventListener('mouseup', onDefaultPinDrag);
+};
+
+// Обработчик отправки формы заполненного объявления на сервер
+var onAddFormSubmit = function () {
+  var isTitleError = onTitleFieldWrongInput();
+  var isPriceError = onPriceFieldWrongInput();
+  var isGuestsError = onGuestAndRoomsChange();
+  if (!isTitleError && !isPriceError && !isGuestsError) {
+    var submitStatus = true;
+    titleField.removeEventListener('invalid', onTitleFieldWrongInput);
+    titleField.removeEventListener('input', onTitleFieldWrongInput);
+    typeField.removeEventListener('change', onTypeFieldChange);
+    priceField.removeEventListener('invalid', onPriceFieldWrongInput);
+    priceField.removeEventListener('input', onPriceFieldWrongInput);
+    timeInField.removeEventListener('change', onTimeInFieldChange);
+    timeOutField.removeEventListener('change', onTimeOutFieldChange);
+    roomsField.removeEventListener('change', onGuestAndRoomsChange);
+    guestsField.removeEventListener('change', onGuestAndRoomsChange);
+    pageResetButton.removeEventListener('click', resetPage);
+    adForm.removeEventListener('submit', onAddFormSubmit);
+
+    return submitStatus;
+  }
+  return submitStatus;
+};
+
+// сообщим об ошибке ввода в поле заголовка объявления
+titleField.addEventListener('invalid', onTitleFieldWrongInput);
+titleField.addEventListener('input', onTitleFieldWrongInput);
+
+// установим зависимость минимальной цены от типа жилья
+typeField.addEventListener('change', onTypeFieldChange);
+
+// сообщим об ошибке ввода в поле цены
+priceField.addEventListener('invalid', onPriceFieldWrongInput);
+priceField.addEventListener('input', onPriceFieldWrongInput);
+
+// синхронизируем поля времени заезда и выезда
+timeInField.addEventListener('change', onTimeInFieldChange);
+timeOutField.addEventListener('change', onTimeOutFieldChange);
+
+// сообщим об ошибках ввода значений в поле выбора количества гостей при изменениях в обоих полях выбора (комнат и гостей)
+roomsField.addEventListener('change', onGuestAndRoomsChange);
+guestsField.addEventListener('change', onGuestAndRoomsChange);
+
+// возвращаем страницу к первоначальному дефолтному состоянию
+pageResetButton.addEventListener('click', resetPage);
+
+// Отправка данных формы на сервер возможна только при валидных значениях всех полей
+adForm.addEventListener('submit', onAddFormSubmit);
