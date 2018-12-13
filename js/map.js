@@ -442,6 +442,8 @@ var onDefaultPinDrag = function () {
 
     // удалим обработчик клика по стартовой метке
     defaultPin.removeEventListener('mouseup', onDefaultPinDrag);
+    // сбросим состояние dragged у дефолтной разметки
+    dragged = false;
   }
 };
 
@@ -631,7 +633,7 @@ var resetPage = function () {
   // установим параметры начального неактивного состояния фильтрам и форме объявления
   setDefaultMode();
 
-  // обнулим значения полей до дефолтного состояния
+  // обнулим значения полей формы до дефолтного состояния
   avatarField.value = '';
   titleField.value = '';
   titleField.style.border = '';
