@@ -1248,3 +1248,7 @@ fieldset {
   outline: none;
   opacity: 0.6;
 }
+
+.error__ad-form {
+  box-shadow: 0 0 0 5px #ff0000;
+}
