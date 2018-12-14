@@ -364,12 +364,20 @@ var onMouseMove = function (moveEvt) {
     y: moveEvt.clientY
   };
 
-  defaultPin.style.top = (defaultPin.offsetTop - shift.y) + 'px';
-  defaultPin.style.left = (defaultPin.offsetLeft - shift.x) + 'px';
+  var defaultPinCurrentCoords = {
+    x: defaultPin.offsetLeft - shift.x,
+    y: defaultPin.offsetTop - shift.y
+  };
+
+  defaultPin.style.top = defaultPinCurrentCoords.y + 'px';
+  defaultPin.style.left = defaultPinCurrentCoords.x + 'px';
+
+//  defaultPin.style.top = (defaultPin.offsetTop - shift.y) + 'px';
+//  defaultPin.style.left = (defaultPin.offsetLeft - shift.x) + 'px';
 
   // устанавливаем текущее положение стартовой метки в поле адреса
-  defaultPinCurrentPosition.x = Math.round((defaultPin.offsetLeft - shift.x) + DEFAULT_PIN_WIDTH / 2);
-  defaultPinCurrentPosition.y = (defaultPin.offsetTop - shift.y) + DEFAULT_PIN_ACTIVE_HEIGHT;
+  defaultPinCurrentPosition.x = Math.round(defaultPinCurrentCoords.x + DEFAULT_PIN_WIDTH / 2);
+  defaultPinCurrentPosition.y = defaultPinCurrentCoords.y + DEFAULT_PIN_ACTIVE_HEIGHT;
   addressInputField.value = defaultPinCurrentPosition.x + ', ' + defaultPinCurrentPosition.y;
 
   // запишем путь, пройденный стартовой меткой
@@ -432,26 +440,25 @@ var onDefaultPinDrag = function () {
     addPinsHandlers(activePins, dataCards);
 
     // сообщим об ошибке ввода в поле заголовка объявления
-    titleField.addEventListener('input', onTitleFieldWrongInput);
-    // titleField.addEventListener('invalid', onTitleFieldWrongInput);
+    titleField.addEventListener('invalid', onTitleFieldInvalid);
 
     // установим зависимость минимальной цены от типа жилья
     typeField.addEventListener('change', onTypeFieldChange);
 
     // сообщим об ошибке ввода в поле цены
-    priceField.addEventListener('input', onPriceFieldWrongInput);
-    // priceField.addEventListener('invalid', onPriceFieldWrongInput);
+    priceField.addEventListener('invalid', onPriceFieldInvalid);
 
     // синхронизируем поля времени заезда и выезда
     timeInField.addEventListener('change', onTimeInFieldChange);
     timeOutField.addEventListener('change', onTimeOutFieldChange);
 
-    // сообщим об ошибках ввода значений в поле выбора количества гостей при изменениях в обоих полях выбора (комнат и гостей)
+    // установим валидность значений поля количества гостей, синхронизировав его с полем выбора количества комнат
     roomsField.addEventListener('change', onGuestAndRoomsChange);
     guestsField.addEventListener('change', onGuestAndRoomsChange);
-    // guestsField.addEventListener('invalid', onGuestAndRoomsChange);
+    // сообщим об ошибках ввода значений в поле выбора количества гостей
+    guestsField.addEventListener('invalid', onGuestAndRoomsChange);
 
-    // возможность возвратить страницу к первоначальному дефолтному состоянию
+    // дадим возможность возвратить страницу к первоначальному дефолтному состоянию
     pageResetButton.addEventListener('click', resetPage);
 
     // удалим обработчик клика по стартовой метке
@@ -480,24 +487,20 @@ var addPinsClickHandler = function (pin, data) {
 };
 
 // Обработчик ошибки ввода в поле заголовка
-var onTitleFieldWrongInput = function () {
+var onTitleFieldInvalid = function () {
   if (titleField.validity.tooShort) {
     titleField.setCustomValidity('Длина заголовка должна быть более 30 символов');
-    titleField.classList.add('error__ad-form');
   } else if (titleField.validity.tooLong) {
     titleField.setCustomValidity('Длина заголовка не должна превышать 100 символов');
-    titleField.classList.add('error__ad-form');
   } else if (titleField.validity.valueMissing) {
     titleField.setCustomValidity('Обязательное поле');
-    titleField.classList.add('error__ad-form');
   } else {
     titleField.setCustomValidity('');
-    titleField.classList.remove('error__ad-form');
   }
 };
 
 // установим зависимость минимальной цены от типа жилья
-var setMinPriceFromType = function () {
+var onTypeFieldChange = function () {
   var selectedTypeIndex = typeField.selectedIndex;
   if (typeField.children[selectedTypeIndex]) {
     var housingType = typeField.children[selectedTypeIndex].value;
@@ -507,26 +510,16 @@ var setMinPriceFromType = function () {
 };
 
 // Обработчик ошибки ввода в поле цены
-var onPriceFieldWrongInput = function () {
+var onPriceFieldInvalid = function () {
   if (priceField.validity.rangeUnderflow) {
     priceField.setCustomValidity('Цена должна быть больше указанной  минимальной цены, соответствующей типу жилья');
-    priceField.classList.add('error__ad-form');
   } else if (priceField.validity.rangeOverflow) {
     priceField.setCustomValidity('Цена не должна превышать 1 000 000 руб.');
-    priceField.classList.add('error__ad-form');
   } else if (priceField.validity.valueMissing) {
     priceField.setCustomValidity('Обязательное поле');
-    priceField.classList.add('error__ad-form');
   } else {
     priceField.setCustomValidity('');
-    priceField.classList.remove('error__ad-form');
   }
-};
-
-// Обработчик изменений в поле типа жилья синхронизован с сообщениями об ошибке в поле цены
-var onTypeFieldChange = function () {
-  setMinPriceFromType();
-//  onPriceFieldWrongInput();
 };
 
 // обработчик изменений в поле времени заезда
@@ -579,19 +572,8 @@ var onGuestAndRoomsChange = function () {
   var guestsFieldValidity = getGuestsFieldValidity();
   if (!guestsFieldValidity.validityStatus) {
     guestsField.setCustomValidity(guestsFieldValidity.textError);
-    guestsField.classList.add('error__ad-form');
   } else {
     guestsField.setCustomValidity('');
-    if (guestsField.classList.contains('error__ad-form')) {
-      guestsField.classList.remove('error__ad-form');
-    }
-  }
-};
-
-// функция удаления обводки у невалидных полей формы
-var deliteInvalidFieldOutline = function (field) {
-  if (field.classList.contains('error__ad-form')) {
-    field.classList.remove('error__ad-form');
   }
 };
 
@@ -617,24 +599,22 @@ var resetPage = function () {
 
   // обнулим значения полей формы до дефолтного состояния
   adForm.reset();
+  priceField.placeholder = PRICE_FIELD_MIN.flat;
+
 
   // установим параметры начального неактивного состояния фильтрам и форме объявления
   setDefaultMode();
   adForm.classList.add('ad-form--disabled');
 
-  // уберём красную обводку невалидных полей, если она есть
-  deliteInvalidFieldOutline(titleField);
-  deliteInvalidFieldOutline(priceField);
-  deliteInvalidFieldOutline(guestsField);
-
   // Сбросим обработчики прослушивания полей формы
-  titleField.removeEventListener('input', onTitleFieldWrongInput);
+  titleField.removeEventListener('invalid', onTitleFieldInvalid);
   typeField.removeEventListener('change', onTypeFieldChange);
-  priceField.removeEventListener('input', onPriceFieldWrongInput);
+  priceField.removeEventListener('invalid', onPriceFieldInvalid);
   timeInField.removeEventListener('change', onTimeInFieldChange);
   timeOutField.removeEventListener('change', onTimeOutFieldChange);
   roomsField.removeEventListener('change', onGuestAndRoomsChange);
   guestsField.removeEventListener('change', onGuestAndRoomsChange);
+  guestsField.removeEventListener('invalid', onGuestAndRoomsChange);
   // удалим обработчик сброса значений до дефолта
   pageResetButton.removeEventListener('click', resetPage);
 
