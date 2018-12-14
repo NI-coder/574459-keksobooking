@@ -372,8 +372,8 @@ var onMouseMove = function (moveEvt) {
   defaultPin.style.top = defaultPinCurrentCoords.y + 'px';
   defaultPin.style.left = defaultPinCurrentCoords.x + 'px';
 
-//  defaultPin.style.top = (defaultPin.offsetTop - shift.y) + 'px';
-//  defaultPin.style.left = (defaultPin.offsetLeft - shift.x) + 'px';
+  // defaultPin.style.top = (defaultPin.offsetTop - shift.y) + 'px';
+  // defaultPin.style.left = (defaultPin.offsetLeft - shift.x) + 'px';
 
   // устанавливаем текущее положение стартовой метки в поле адреса
   defaultPinCurrentPosition.x = Math.round(defaultPinCurrentCoords.x + DEFAULT_PIN_WIDTH / 2);
