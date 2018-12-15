@@ -21,8 +21,6 @@ var MIN_X = 0;
 var MIN_Y = 130;
 var MAX_X = 1200;
 var MAX_Y = 630;
-var MIN_DEFAULT_PIN_X = MIN_X - DEFAULT_PIN_WIDTH / 2;
-var MAX_DEFAULT_PIN_X = MAX_X - DEFAULT_PIN_WIDTH / 2;
 var MIN_PRICE = 1000;
 var MAX_PRICE = 1000000;
 var MAX_ROOMS_NUMBER = 5;
@@ -49,6 +47,8 @@ var PRICE_FIELD_MIN = {
   palace: 10000
 };
 
+var minDefaultPinX = MIN_X - DEFAULT_PIN_WIDTH / 2;
+var maxDefaultPinX = MAX_X - DEFAULT_PIN_WIDTH / 2;
 var activePins;
 var popupCard;
 var startCoords = {};
@@ -377,7 +377,7 @@ var renderDefaultPinCoords = function (action) {
     y: defaultPin.offsetTop - shift.y
   };
 
-  if (defaultPinCurrentCoords.y >= MIN_Y && defaultPinCurrentCoords.y <= MAX_Y && defaultPinCurrentCoords.x >= MIN_DEFAULT_PIN_X && defaultPinCurrentCoords.x <= MAX_DEFAULT_PIN_X) {
+  if (defaultPinCurrentCoords.y >= MIN_Y && defaultPinCurrentCoords.y <= MAX_Y && defaultPinCurrentCoords.x >= minDefaultPinX && defaultPinCurrentCoords.x <= maxDefaultPinX) {
     defaultPin.style.top = defaultPinCurrentCoords.y + 'px';
     defaultPin.style.left = defaultPinCurrentCoords.x + 'px';
   }
