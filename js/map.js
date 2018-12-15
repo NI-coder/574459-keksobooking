@@ -439,24 +439,22 @@ var onDefaultPinDrag = function () {
 
     addPinsHandlers(activePins, dataCards);
 
-    // сообщим об ошибке ввода в поле заголовка объявления
-    titleField.addEventListener('invalid', onTitleFieldInvalid);
+    // установим валидность значений и сообщим об ошибке ввода в поле заголовка объявления
+    titleField.addEventListener('change', onTitleFieldInvalid);
 
     // установим зависимость минимальной цены от типа жилья
     typeField.addEventListener('change', onTypeFieldChange);
 
-    // сообщим об ошибке ввода в поле цены
-    priceField.addEventListener('invalid', onPriceFieldInvalid);
+    // установим валидность значений и сообщим об ошибке ввода в поле цены
+    priceField.addEventListener('change', onPriceFieldInvalid);
 
     // синхронизируем поля времени заезда и выезда
     timeInField.addEventListener('change', onTimeInFieldChange);
     timeOutField.addEventListener('change', onTimeOutFieldChange);
 
-    // установим валидность значений поля количества гостей, синхронизировав его с полем выбора количества комнат
+    // установим валидность значений поля количества гостей, синхронизировав его с полем выбора количества комнат, и сообщим об ошибке ввода в поле гостей
     roomsField.addEventListener('change', onGuestAndRoomsChange);
     guestsField.addEventListener('change', onGuestAndRoomsChange);
-    // сообщим об ошибках ввода значений в поле выбора количества гостей
-    guestsField.addEventListener('invalid', onGuestAndRoomsChange);
 
     // дадим возможность возвратить страницу к первоначальному дефолтному состоянию
     pageResetButton.addEventListener('click', resetPage);
@@ -607,14 +605,13 @@ var resetPage = function () {
   adForm.classList.add('ad-form--disabled');
 
   // Сбросим обработчики прослушивания полей формы
-  titleField.removeEventListener('invalid', onTitleFieldInvalid);
+  titleField.removeEventListener('change', onTitleFieldInvalid);
   typeField.removeEventListener('change', onTypeFieldChange);
-  priceField.removeEventListener('invalid', onPriceFieldInvalid);
+  priceField.removeEventListener('change', onPriceFieldInvalid);
   timeInField.removeEventListener('change', onTimeInFieldChange);
   timeOutField.removeEventListener('change', onTimeOutFieldChange);
   roomsField.removeEventListener('change', onGuestAndRoomsChange);
   guestsField.removeEventListener('change', onGuestAndRoomsChange);
-  guestsField.removeEventListener('invalid', onGuestAndRoomsChange);
   // удалим обработчик сброса значений до дефолта
   pageResetButton.removeEventListener('click', resetPage);
 
