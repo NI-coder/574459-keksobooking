@@ -384,7 +384,7 @@ var renderDefaultPinCoords = function (action) {
 
   // устанавливаем текущее положение стартовой метки в поле адреса
   defaultPinCurrentPosition.x = Math.round(defaultPinCurrentCoords.x + DEFAULT_PIN_WIDTH / 2);
-  defaultPinCurrentPosition.y = defaultPinCurrentCoords.y;
+  defaultPinCurrentPosition.y = defaultPinCurrentCoords.y + DEFAULT_PIN_ACTIVE_HEIGHT;
   addressInputField.value = defaultPinCurrentPosition.x + ', ' + defaultPinCurrentPosition.y;
 
   // запишем путь, пройденный стартовой меткой
