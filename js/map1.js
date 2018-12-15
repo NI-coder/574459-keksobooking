@@ -16,20 +16,14 @@ var DEFAULT_PIN_START_POSITION = {
 };
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
-var MIN_DEFAULT_PIN_PACE = 5;
 var MIN_X = 0;
 var MIN_Y = 130;
-var MAX_X = 1200;
+var MAX_X = 1150;
 var MAX_Y = 630;
-var MIN_DEFAULT_PIN_X = MIN_X - DEFAULT_PIN_WIDTH / 2;
-var MAX_DEFAULT_PIN_X = MAX_X - DEFAULT_PIN_WIDTH / 2;
-var MIN_DEFAULT_PIN_Y = MIN_Y - DEFAULT_PIN_ACTIVE_HEIGHT;
-var MAX_DEFAULT_PIN_Y = MAX_Y - DEFAULT_PIN_ACTIVE_HEIGHT;
 var MIN_PRICE = 1000;
 var MAX_PRICE = 1000000;
 var MAX_ROOMS_NUMBER = 5;
 var MAX_GUESTS_NUMBER = 10;
-var ESC_KEYCODE = 27;
 var TYPES_RUS = {
   palace: 'Дворец',
   flat: 'Квартира',
@@ -44,6 +38,8 @@ var FEATURES_CLASSES = {
   elevator: 'popup__feature--elevator',
   conditioner: 'popup__feature--conditioner'
 };
+var ESC_KEYCODE = 27;
+var MIN_DEFAULT_PIN_PACE = 5;
 var PRICE_FIELD_MIN = {
   bungalo: 0,
   flat: 1000,
@@ -362,16 +358,18 @@ var setDefaultMode = function () {
 };
 setDefaultMode();
 
-// функция расчёта координат стартовой метки и их записи в окно адреса
-var renderDefaultPinCoords = function (action) {
+// обработчик передвижения мыши фиксирует координаты стартовой метки в окне адреса
+var onMouseMove = function (moveEvt) {
+  moveEvt.preventDefault();
+
   var shift = {
-    x: startCoords.x - action.clientX,
-    y: startCoords.y - action.clientY
+    x: startCoords.x - moveEvt.clientX,
+    y: startCoords.y - moveEvt.clientY
   };
 
   startCoords = {
-    x: action.clientX,
-    y: action.clientY
+    x: moveEvt.clientX,
+    y: moveEvt.clientY
   };
 
   var defaultPinCurrentCoords = {
@@ -379,10 +377,8 @@ var renderDefaultPinCoords = function (action) {
     y: defaultPin.offsetTop - shift.y
   };
 
-  if (defaultPinCurrentCoords.y > MIN_DEFAULT_PIN_Y && defaultPinCurrentCoords.y < MAX_DEFAULT_PIN_Y && defaultPinCurrentCoords.x > MIN_DEFAULT_PIN_X && defaultPinCurrentCoords.x < MAX_DEFAULT_PIN_X) {
-    defaultPin.style.top = defaultPinCurrentCoords.y + 'px';
-    defaultPin.style.left = defaultPinCurrentCoords.x + 'px';
-  }
+  defaultPin.style.top = defaultPinCurrentCoords.y + 'px';
+  defaultPin.style.left = defaultPinCurrentCoords.x + 'px';
 
   // устанавливаем текущее положение стартовой метки в поле адреса
   defaultPinCurrentPosition.x = Math.round(defaultPinCurrentCoords.x + DEFAULT_PIN_WIDTH / 2);
@@ -398,13 +394,6 @@ var renderDefaultPinCoords = function (action) {
   }
 };
 
-// обработчик передвижения мыши фиксирует координаты стартовой метки в окне адреса
-var onMouseMove = function (moveEvt) {
-  moveEvt.preventDefault();
-
-  renderDefaultPinCoords(moveEvt);
-};
-
 // перетаскивание стартовой метки
 defaultPin.addEventListener('mousedown', function (evt) {
   evt.preventDefault();
@@ -416,9 +405,6 @@ defaultPin.addEventListener('mousedown', function (evt) {
 
   var onMouseUp = function (upEvt) {
     upEvt.preventDefault();
-
-    // отжатие кнопки мыши дублирует расчёт и запись координат стартовой метки
-    renderDefaultPinCoords(upEvt);
 
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
