@@ -23,8 +23,6 @@ var MAX_X = 1200;
 var MAX_Y = 630;
 var MIN_DEFAULT_PIN_X = MIN_X - DEFAULT_PIN_WIDTH / 2;
 var MAX_DEFAULT_PIN_X = MAX_X - DEFAULT_PIN_WIDTH / 2;
-var MIN_DEFAULT_PIN_Y = MIN_Y - DEFAULT_PIN_ACTIVE_HEIGHT;
-var MAX_DEFAULT_PIN_Y = MAX_Y - DEFAULT_PIN_ACTIVE_HEIGHT;
 var MIN_PRICE = 1000;
 var MAX_PRICE = 1000000;
 var MAX_ROOMS_NUMBER = 5;
@@ -379,14 +377,14 @@ var renderDefaultPinCoords = function (action) {
     y: defaultPin.offsetTop - shift.y
   };
 
-  if (defaultPinCurrentCoords.y > MIN_DEFAULT_PIN_Y && defaultPinCurrentCoords.y < MAX_DEFAULT_PIN_Y && defaultPinCurrentCoords.x > MIN_DEFAULT_PIN_X && defaultPinCurrentCoords.x < MAX_DEFAULT_PIN_X) {
+  if (defaultPinCurrentCoords.y >= MIN_Y && defaultPinCurrentCoords.y <= MAX_Y && defaultPinCurrentCoords.x >= MIN_DEFAULT_PIN_X && defaultPinCurrentCoords.x <= MAX_DEFAULT_PIN_X) {
     defaultPin.style.top = defaultPinCurrentCoords.y + 'px';
     defaultPin.style.left = defaultPinCurrentCoords.x + 'px';
   }
 
   // устанавливаем текущее положение стартовой метки в поле адреса
   defaultPinCurrentPosition.x = Math.round(defaultPinCurrentCoords.x + DEFAULT_PIN_WIDTH / 2);
-  defaultPinCurrentPosition.y = defaultPinCurrentCoords.y + DEFAULT_PIN_ACTIVE_HEIGHT;
+  defaultPinCurrentPosition.y = defaultPinCurrentCoords.y;
   addressInputField.value = defaultPinCurrentPosition.x + ', ' + defaultPinCurrentPosition.y;
 
   // запишем путь, пройденный стартовой меткой
