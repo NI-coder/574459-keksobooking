@@ -206,6 +206,21 @@ var clearFromPrevPopup = function () {
   }
 };
 
+// функция блокировки доступа к интерактивным элементам
+var setElementsDisable = function (elem) {
+  for (var i = 0; i < elem.children.length; i++) {
+    elem.children[i].disabled = 'disabled';
+  }
+};
+
+// функция синхронизации изменений в двух полях формы
+var setFormFieldsCoherence = function (field1, field2) {
+  var selectedField1Index = field1.selectedIndex;
+  if (field1.children[selectedField1Index]) {
+    field2.children[selectedField1Index].selected = true;
+  }
+};
+
 // создаём массив объектов - входных данных для карточек объявлений
 var getDataList = function () {
   var dataCards = [];
@@ -329,13 +344,6 @@ var getPopupCard = function (card) {
   return map.insertBefore(popupInFragment, mapFiltersContainer);
 };
 
-// функция блокировки доступа к интерактивным элементам
-var setElementsDisable = function (elem) {
-  for (var i = 0; i < elem.children.length; i++) {
-    elem.children[i].disabled = 'disabled';
-  }
-};
-
 // установим параметры начального неактивного состояния
 var setDefaultMode = function () {
   // заблокируем доступ к полям в форме подачи объявления и в фильтре объявлений
@@ -440,13 +448,13 @@ var onDefaultPinDrag = function () {
     addPinsHandlers(activePins, dataCards);
 
     // установим валидность значений и сообщим об ошибке ввода в поле заголовка объявления
-    titleField.addEventListener('change', onTitleFieldInvalid);
+    titleField.addEventListener('change', onTitleFieldChange);
 
     // установим зависимость минимальной цены от типа жилья
     typeField.addEventListener('change', onTypeFieldChange);
 
     // установим валидность значений и сообщим об ошибке ввода в поле цены
-    priceField.addEventListener('change', onPriceFieldInvalid);
+    priceField.addEventListener('change', onPriceFieldChange);
 
     // синхронизируем поля времени заезда и выезда
     timeInField.addEventListener('change', onTimeInFieldChange);
@@ -485,7 +493,7 @@ var addPinsClickHandler = function (pin, data) {
 };
 
 // Обработчик ошибки ввода в поле заголовка
-var onTitleFieldInvalid = function () {
+var onTitleFieldChange = function () {
   if (titleField.validity.tooShort) {
     titleField.setCustomValidity('Длина заголовка должна быть более 30 символов');
   } else if (titleField.validity.tooLong) {
@@ -505,10 +513,11 @@ var onTypeFieldChange = function () {
     priceField.min = PRICE_FIELD_MIN[housingType];
     priceField.placeholder = PRICE_FIELD_MIN[housingType];
   }
+  onPriceFieldChange();
 };
 
 // Обработчик ошибки ввода в поле цены
-var onPriceFieldInvalid = function () {
+var onPriceFieldChange = function () {
   if (priceField.validity.rangeUnderflow) {
     priceField.setCustomValidity('Цена должна быть больше указанной  минимальной цены, соответствующей типу жилья');
   } else if (priceField.validity.rangeOverflow) {
@@ -522,40 +531,31 @@ var onPriceFieldInvalid = function () {
 
 // обработчик изменений в поле времени заезда
 var onTimeInFieldChange = function () {
-  var selectedTimeInIndex = timeInField.selectedIndex;
-  if (timeInField.children[selectedTimeInIndex]) {
-    timeOutField.children[selectedTimeInIndex].selected = true;
-  }
+  setFormFieldsCoherence(timeInField, timeOutField);
 };
 
 // обработчик изменений в поле времени выезда
 var onTimeOutFieldChange = function () {
-  var selectedTimeOutIndex = timeOutField.selectedIndex;
-  if (timeOutField.children[selectedTimeOutIndex]) {
-    timeInField.children[selectedTimeOutIndex].selected = true;
-  }
+  setFormFieldsCoherence(timeOutField, timeInField);
 };
 
 // Введём функцию, регистрирующую валидность поля выбора количества мест
 var getGuestsFieldValidity = function () {
   var currentGuestsFieldValidity = false;
   var textGuestsError = '';
+  var selectedRoomsIndex = roomsField.selectedIndex;
   var selectedGuestsIndex = guestsField.selectedIndex;
   var selectedGuestsValue = guestsField.children[selectedGuestsIndex].value;
-  // Переберём элементы поля выбора количества комнат
-  for (var i = 0; i < roomsField.children.length; i++) {
-    // Если текущий элемент выбран,
-    if (roomsField.children[i].selected) {
-      // Свойство объекта roomsAmount должно быть равно текущему значению поля выбора комнат.
-      var currentRoomsValue = roomsField.children[i].value;
-      // Значение поля количества мест должно входить в массив значений свойства объекта roomsAmount.
-      var validityIndex = roomsToGuestsAmount[currentRoomsValue].permitted.indexOf(selectedGuestsValue);
-      // Если значение отсутствует в соответствующем массиве объекта roomsAmount, то validityIndex будет равен -1, а само значение недопустимо
-      if (validityIndex !== -1) {
-        currentGuestsFieldValidity = true;
-      } else {
-        textGuestsError = roomsToGuestsAmount[currentRoomsValue].textError;
-      }
+  if (roomsField.children[selectedRoomsIndex]) {
+    // Свойство объекта roomsAmount должно быть равно выбранному значению поля комнат.
+    var currentRoomsValue = roomsField.children[selectedRoomsIndex].value;
+    // Значение поля количества мест должно входить в массив значений свойства объекта roomsAmount.
+    var validityIndex = roomsToGuestsAmount[currentRoomsValue].permitted.indexOf(selectedGuestsValue);
+    // Если значение отсутствует в соответствующем массиве объекта roomsAmount, то validityIndex будет равен -1, а само значение недопустимо
+    if (validityIndex !== -1) {
+      currentGuestsFieldValidity = true;
+    } else {
+      textGuestsError = roomsToGuestsAmount[currentRoomsValue].textError;
     }
   }
 
@@ -598,6 +598,7 @@ var resetPage = function () {
   // обнулим значения полей формы до дефолтного состояния
   adForm.reset();
   priceField.placeholder = PRICE_FIELD_MIN.flat;
+  priceField.min = PRICE_FIELD_MIN.flat;
 
 
   // установим параметры начального неактивного состояния фильтрам и форме объявления
@@ -605,9 +606,9 @@ var resetPage = function () {
   adForm.classList.add('ad-form--disabled');
 
   // Сбросим обработчики прослушивания полей формы
-  titleField.removeEventListener('change', onTitleFieldInvalid);
+  titleField.removeEventListener('change', onTitleFieldChange);
   typeField.removeEventListener('change', onTypeFieldChange);
-  priceField.removeEventListener('change', onPriceFieldInvalid);
+  priceField.removeEventListener('change', onPriceFieldChange);
   timeInField.removeEventListener('change', onTimeInFieldChange);
   timeOutField.removeEventListener('change', onTimeOutFieldChange);
   roomsField.removeEventListener('change', onGuestAndRoomsChange);
