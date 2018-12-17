@@ -3,10 +3,6 @@
   var OFFER_CARDS_QUANTITY = 8;
   var PIN_WIDTH = 50;
   var PIN_HEIGHT = 70;
-  var MIN_X = 0;
-  var MIN_Y = 130;
-  var MAX_X = 1200;
-  var MAX_Y = 630;
   var MIN_PRICE = 1000;
   var MAX_PRICE = 1000000;
   var MAX_ROOMS_NUMBER = 5;
@@ -66,8 +62,8 @@
 
   // координаты метки локации
   var getLocation = function () {
-    var x = getRandomNum(MIN_X, MAX_X) - PIN_WIDTH / 2;
-    var y = getRandomNum(MIN_Y, MAX_Y) - PIN_HEIGHT;
+    var x = getRandomNum(window.utils.MIN_X, window.utils.MAX_X) - PIN_WIDTH / 2;
+    var y = getRandomNum(window.utils.MIN_Y, window.utils.MAX_Y) - PIN_HEIGHT;
     var location = [x, y];
     return location;
   };
@@ -103,5 +99,7 @@
     return dataCards;
   };
 
-  window.getDataList = getDataList;
+  window.data = {
+    getDataList: getDataList
+  };
 })();
