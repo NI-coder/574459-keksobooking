@@ -69,5 +69,4 @@
     roomsField: roomsField,
     guestsField: guestsField
   };
-
 })();

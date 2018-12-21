@@ -99,7 +99,7 @@
     return dataCards;
   };
 
-  window.data = {
+  window.baseSource = {
     getDataList: getDataList
   };
 })();

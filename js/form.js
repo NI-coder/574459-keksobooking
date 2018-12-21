@@ -1,7 +1,7 @@
 'use strict';
 
 (function () {
-  // Введём словарь, описывающий допустимые значения поля количества гостей, зависяших от значений поля количества комнат
+  // Cловарь, описывающий допустимые значения поля количества гостей, зависяших от значений поля количества комнат
   var roomsToGuestsAmount = {
     1: {
       permitted: ['1'],
@@ -111,6 +111,12 @@
       window.utils.guestsField.setCustomValidity('');
     }
   };
+
+  // при отправке формы блокируем действие по умолчанию и заменяем его AJAX запросом
+  window.utils.adForm.addEventListener('submit', function (evt) {
+    window.backend.unloadForm(new FormData(window.utils.adForm), window.backend.onSuccessSending, window.backend.onFailRequest);
+    evt.preventDefault();
+  });
 
   window.form = {
     onTitleFieldChange: onTitleFieldChange,

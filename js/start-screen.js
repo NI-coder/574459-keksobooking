@@ -27,7 +27,7 @@
   };
   setDefaultMode();
 
-  window.defaultMode = {
+  window.startScreen = {
     setDefaultMode: setDefaultMode
   };
 })();

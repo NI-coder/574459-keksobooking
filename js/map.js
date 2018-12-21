@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+  var dataCards;
   var activePins;
   var popupCard;
 
@@ -8,6 +9,46 @@
   var mapPinsBlock = window.utils.map.querySelector('.map__pins');
   // найдём шаблон метки
   var mapPinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
+
+  // обработчик успешной загрузки данных с сервера
+  var onSuccessGetting = function (data) {
+    // закачаем с сервера массив объектов объявлений
+    dataCards = data;
+
+    // активируем карту
+    window.utils.map.classList.remove('map--faded');
+
+    // разблокируем фильтры и форму заполнения объявления
+    for (var i = 0; i < window.utils.filterForm.children.length; i++) {
+      window.utils.filterForm.children[i].disabled = '';
+    }
+    window.utils.adForm.classList.remove('ad-form--disabled');
+    for (i = 0; i < window.utils.adForm.children.length; i++) {
+      window.utils.adForm.children[i].disabled = '';
+    }
+
+    // выгрузим теги меток в основную разметку
+    window.map.activePins = renderPins(dataCards);
+
+    // установим меткам обработчики кликов
+    var addPinsHandlers = function (pins, datas) {
+      for (i = 0; i < pins.length; i++) {
+        addPinsClickHandler(pins[i], datas[i]);
+      }
+    };
+    addPinsHandlers(window.map.activePins, dataCards);
+
+    // навесим обработчики событий для валидации значений формы объявления
+    window.formValidity.addFieldsListener();
+
+    // дадим возможность возвратить страницу к первоначальному дефолтному состоянию
+    window.utils.pageResetButton.addEventListener('click', window.rollback.resetPage);
+
+    // удалим обработчик клика по стартовой метке
+    window.utils.mainPin.removeEventListener('mouseup', onMainPinDrag);
+    // сбросим состояние dragged у дефолтной метки
+    window.mainPin.dragged = false;
+  };
 
   // функция удаления класса у отработавшей метки
   var deletePrevPinClass = function () {
@@ -42,12 +83,14 @@
   var renderPins = function (cards) {
     var mapPins = [];
     for (var i = 0; i < cards.length; i++) {
-      var mapPinElement = mapPinTemplate.cloneNode(true);
-      mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
-      var mapPinImage = mapPinElement.querySelector('img');
-      mapPinImage.src = cards[i].author.avatar;
-      mapPinImage.alt = cards[i].offer.title;
-      mapPins[i] = window.utils.fragment.appendChild(mapPinElement);
+      if (cards[i].offer) {
+        var mapPinElement = mapPinTemplate.cloneNode(true);
+        mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
+        var mapPinImage = mapPinElement.querySelector('img');
+        mapPinImage.src = cards[i].author.avatar;
+        mapPinImage.alt = cards[i].offer.title;
+        mapPins[i] = window.utils.fragment.appendChild(mapPinElement);
+      }
     }
 
     // выгружаем разметку меток из шаблона в основную разметку
@@ -59,42 +102,8 @@
   // функция активации карты и интерактивных полей
   var onMainPinDrag = function () {
     if (window.mainPin.dragged) {
-      // активируем карту
-      window.utils.map.classList.remove('map--faded');
-
-      // разблокируем фильтры и форму заполнения объявления
-      for (var i = 0; i < window.utils.filterForm.children.length; i++) {
-        window.utils.filterForm.children[i].disabled = '';
-      }
-      window.utils.adForm.classList.remove('ad-form--disabled');
-      for (i = 0; i < window.utils.adForm.children.length; i++) {
-        window.utils.adForm.children[i].disabled = '';
-      }
-
-      // создадим базу данных
-      var dataCards = window.data.getDataList();
-
-      // выгрузим теги меток в основную разметку
-      window.map.activePins = renderPins(dataCards);
-
-      // установим меткам обработчики кликов
-      var addPinsHandlers = function (pins, datas) {
-        for (i = 0; i < pins.length; i++) {
-          addPinsClickHandler(pins[i], datas[i]);
-        }
-      };
-      addPinsHandlers(window.map.activePins, dataCards);
-
-      // навесим обработчики событий для валидации значений формы объявления
-      window.formValidity.addFieldsListener();
-
-      // дадим возможность возвратить страницу к первоначальному дефолтному состоянию
-      window.utils.pageResetButton.addEventListener('click', window.reset.resetPage);
-
-      // удалим обработчик клика по стартовой метке
-      window.utils.mainPin.removeEventListener('mouseup', onMainPinDrag);
-      // сбросим состояние dragged у дефолтной метки
-      window.mainPin.dragged = false;
+      // Загрузим массив объявлений с сервера
+      window.backend.uploadData(onSuccessGetting, window.backend.onFailRequest);
     }
   };
 
@@ -107,7 +116,7 @@
       deletePrevPinClass();
       clearFromPrevPopup();
       pin.classList.add('map__pin--active');
-      popupCard = window.popupCard.getPopupCard(data);
+      popupCard = window.shownAd.getPopupCard(data);
       document.addEventListener('keydown', onPopupEscPress);
       var closeButton = popupCard.querySelector('.popup__close');
       closeButton.addEventListener('click', function () {
