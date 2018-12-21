@@ -39,8 +39,10 @@
 
   // сформируем DOM-элемент списка дополнительных характеристик размещения
   var setOfferFeatures = function (featureItems, offerCard) {
+    featureItems.classList.add('visually-hidden');
     featureItems.innerHTML = '';
     if (offerCard.offer.features.length > 0) {
+      featureItems.classList.remove('visually-hidden');
       for (var i = 0; i < offerCard.offer.features.length; i++) {
         var featureItem = document.createElement('li');
         featureItem.className = 'popup__feature ' + FEATURES_CLASSES[offerCard.offer.features[i]];
@@ -51,7 +53,9 @@
 
   // сформируем DOM-элемент списка фотографий
   var setOfferPhotos = function (photos, offerCard) {
+    photos.classList.add('visually-hidden');
     if (offerCard.offer.photos.length > 0) {
+      photos.classList.remove('visually-hidden');
       for (var j = 0; j < offerCard.offer.photos.length; j++) {
         if (j < offerCard.offer.photos.length - 1) {
           var newPhoto = photos.children[0].cloneNode(true);
@@ -95,7 +99,7 @@
     return window.utils.map.insertBefore(popupInFragment, mapFiltersContainer);
   };
 
-  window.popupCard = {
+  window.shownAd = {
     getPopupCard: getPopupCard
   };
 })();

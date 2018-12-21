@@ -28,7 +28,7 @@
 
 
     // установим параметры начального неактивного состояния фильтрам и форме объявления
-    window.defaultMode.setDefaultMode();
+    window.startScreen.setDefaultMode();
     window.utils.adForm.classList.add('ad-form--disabled');
 
     // Сбросим обработчики прослушивания полей формы
@@ -46,7 +46,7 @@
     window.utils.mainPin.addEventListener('mouseup', window.map.onMainPinDrag);
   };
 
-  window.reset = {
+  window.rollback = {
     resetPage: resetPage
   };
 })();
