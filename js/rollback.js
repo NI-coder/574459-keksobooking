@@ -7,7 +7,7 @@
     window.utils.map.classList.add('map--faded');
 
     // удалим теги меток из разметки
-    window.map.activePins.forEach(function (pin) {
+    window.map.offerPins.forEach(function (pin) {
       pin.remove();
     });
 
