@@ -15,7 +15,7 @@
   var xhr;
 
   // функция обработки реакции сервера на запрос
-  var setServerListener = function (onError) {
+  var setServerResponseInterpreter = function (onError) {
     var error;
     if (!codeErrorToText[xhr.status]) {
       error = 'Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText;
@@ -27,7 +27,7 @@
   };
 
   // функция обработки ошибок выполнения запроса
-  var setErrorsListener = function (onError) {
+  var setRequestErrorsInterpreter = function (onError) {
     // сообщим об ошибке при отсутствии соединения с сервером
     xhr.addEventListener('error', function () {
       onError('Произошла ошибка соединения');
@@ -42,7 +42,7 @@
   };
 
   // функция загрузки данных с сервера
-  var uploadData = function (onLoad, onError) {
+  var loadData = function (onLoad, onError) {
     // создадим объект запроса
     xhr = new XMLHttpRequest();
     // ожидаем ответ сервера в формате json
@@ -55,11 +55,11 @@
         onLoad(xhr.response);
       } else {
         // обработаем реакцию сервера на запрос
-        setServerListener(onError);
+        setServerResponseInterpreter(onError);
       }
     });
     // обработаем возможные ошибки выполнения запроса
-    setErrorsListener(onError);
+    setRequestErrorsInterpreter(onError);
 
     // формируем запрос на сервер и отправляем его
     xhr.open('GET', DATA_URL);
@@ -78,18 +78,18 @@
         onLoad();
       } else {
         // обработаем реакцию сервера на запрос
-        setServerListener(onError);
+        setServerResponseInterpreter(onError);
       }
     });
     // обработаем возможные ошибки выполнения запроса
-    setErrorsListener(onError);
+    setRequestErrorsInterpreter(onError);
 
     xhr.open('POST', FORM_URL);
     xhr.send(data);
   };
 
   window.backend = {
-    uploadData: uploadData,
+    loadData: loadData,
     unloadForm: unloadForm,
   };
 })();

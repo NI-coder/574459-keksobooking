@@ -1,8 +1,8 @@
 'use strict';
 
 (function () {
-  var firstData;
-  var renderingData;
+  var firstRecords;
+  var renderingRecords;
   var offerPins;
   var shownPins;
   var popupCard;
@@ -44,9 +44,9 @@
   };
 
   // обработчик успешной загрузки данных с сервера
-  var onSuccessGetting = function (data) {
+  var onSuccessGetting = function (records) {
     // сохраним пришедшие с сервера данные в переменную
-    firstData = data;
+    firstRecords = records;
 
     // активируем карту
     window.utils.map.classList.remove('map--faded');
@@ -61,14 +61,14 @@
     }
 
     // выгрузим теги всех меток в основную разметку и спрячем их
-    window.map.offerPins = renderPins(firstData);
+    window.map.offerPins = renderPins(firstRecords);
 
     // получим отфильтрованные данные для отрисовки меток на карте
-    renderingData = window.selection.getRenderingData(firstData);
+    renderingRecords = window.selection.getRenderingData(firstRecords);
 
     // покажем на карте отфильтрованные метки объявлений
     shownPins =
-    showFilteredPins(renderingData, window.map.offerPins);
+    showFilteredPins(renderingRecords, window.map.offerPins);
 
     // установим меткам обработчики кликов
     window.map.addPinsHandlers = function (pins, datas) {
@@ -76,7 +76,7 @@
         addPinsClickHandler(pins[i], datas[i]);
       }
     };
-    window.map.addPinsHandlers(shownPins, renderingData);
+    window.map.addPinsHandlers(shownPins, renderingRecords);
 
     // навесим обработчики событий для валидации значений формы объявления
     window.formValidity.addFieldsListener();
@@ -112,11 +112,11 @@
   };
 
   // функция отрисовки на карте отфильтрованных меток объявлений
-  var showFilteredPins = function (data, pins) {
+  var showFilteredPins = function (records, pins) {
     var filteredPins = [];
-    data.forEach(function (pinData) {
-      var pinDataX = pinData.location.x + 'px';
-      var pinDataY = pinData.location.y + 'px';
+    records.forEach(function (pinRecords) {
+      var pinDataX = pinRecords.location.x + 'px';
+      var pinDataY = pinRecords.location.y + 'px';
       for (var i = 0; i < pins.length; i++) {
         if (pins[i].style.left === pinDataX && pins[i].style.top === pinDataY) {
           pins[i].classList.remove('visually-hidden');
@@ -131,7 +131,7 @@
   var onMainPinDrag = function () {
     if (window.mainPin.dragged) {
       // Загрузим массив объявлений с сервера
-      window.backend.uploadData(onSuccessGetting, window.responseMessage.onFailRequest);
+      window.backend.loadData(onSuccessGetting, window.responseMessage.onFailRequest);
     }
   };
   // создадим возможность активации карты и интерактивных полей
@@ -156,10 +156,10 @@
     shownPins.forEach(function (pin) {
       pin.classList.add('visually-hidden');
     });
-    renderingData = window.selection.getRenderingData(firstData);
+    renderingRecords = window.selection.getRenderingData(firstRecords);
     shownPins =
-    showFilteredPins(renderingData, window.map.offerPins);
-    window.map.addPinsHandlers(shownPins, renderingData);
+    showFilteredPins(renderingRecords, window.map.offerPins);
+    window.map.addPinsHandlers(shownPins, renderingRecords);
   };
 
   // обработчик изменений в фильтрах карты

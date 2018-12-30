@@ -9,40 +9,33 @@
   var filterValues = {
     index: 0
   };
-
-  // найдём DOM-элементы фильтров
-  var typeFilter = window.utils.map.querySelector('#housing-type');
-  var priceFilter = window.utils.map.querySelector('#housing-price');
-  var roomsFilter = window.utils.map.querySelector('#housing-rooms');
-  var guestsFilter = window.utils.map.querySelector('#housing-guests');
-  var wifiFilter = window.utils.map.querySelector('#filter-wifi');
-  var dishwasherFilter = window.utils.map.querySelector('#filter-dishwasher');
-  var parkingFilter = window.utils.map.querySelector('#filter-parking');
-  var washerFilter = window.utils.map.querySelector('#filter-washer');
-  var elevatorFilter = window.utils.map.querySelector('#filter-elevator');
-  var conditionerFilter = window.utils.map.querySelector('#filter-conditioner');
-
-  // функция удаления свойств объекта, собирающего значения фильтров
-  var deleteFilterValuesProperty = function (property) {
-    if (property) {
-      delete filterValues[property];
-    }
+  var nameToFilterName = {
+    'housing-type': 'type',
+    'housing-price': 'price',
+    'housing-rooms': 'rooms',
+    'housing-guests': 'guests',
+    'filter-wifi': 'wifi',
+    'filter-dishwasher': 'dishwasher',
+    'filter-parking': 'parking',
+    'filter-washer': 'washer',
+    'filter-elevator': 'elevator',
+    'filter-conditioner': 'conditioner'
   };
 
-  // функции заполнения объекта, собирающего значения основных фильтров
-  var fillMainFiltersValue = function (filter, filterItem) {
-    deleteFilterValuesProperty(filterItem);
-    if (filter.value !== 'any') {
-      filterValues[filterItem] = filter.value;
-      filterValues.index++;
-    }
-  };
-  var fillFeatureFiltersValue = function (filter, filterItem) {
-    deleteFilterValuesProperty(filterItem);
-    if (filter.checked) {
-      filterValues[filterItem] = filter.value;
-      filterValues.index++;
-    }
+  // функция заполнения объекта, собирающего выбор полей фильтрации
+  var fillFilterValues = function () {
+    // найдём все выделенные поля формы фильтрации
+    var markedFilters = document.querySelectorAll('.map__filters option:checked:not([value="any"]), .map__filters input:checked');
+    markedFilters.forEach(function (field) {
+      if (!field.name) {
+        var filterName = nameToFilterName[field.parentElement.name];
+        filterValues[filterName] = field.value;
+        filterValues.index++;
+      } else {
+        filterValues[field.value] = field.value;
+        filterValues.index++;
+      }
+    });
   };
 
   // функции выставления рейтинга объектам массива исходных данных по сходству с выбором фильтров
@@ -51,23 +44,26 @@
       dataCard.totalRank++;
     }
   };
+
   var setCapacityDataRanks = function (dataCard, filterItem) {
     if (filterValues[filterItem] && +filterValues[filterItem] === dataCard.offer[filterItem]) {
       dataCard.totalRank++;
     }
   };
+
   var setPriceRank = function (dataCard) {
     priceRank = {
       any: 0,
-      middle: dataCard.offer.price >= 10000 && dataCard.offer.price <= 50000 ? 1 : 0,
-      low: dataCard.offer.price <= 10000 ? 1 : 0,
-      high: dataCard.offer.price >= 50000 ? 1 : 0,
+      middle: dataCard.offer.price >= 10000 && dataCard.offer.price <= 50000,
+      low: dataCard.offer.price < 10000,
+      high: dataCard.offer.price > 50000
     };
 
-    if (filterValues.price && priceRank[filterValues.price] === 1) {
+    if (filterValues.price && priceRank[filterValues.price]) {
       dataCard.totalRank++;
     }
   };
+
   var setFeaturesDataRanks = function (dataCard) {
     if (dataCard.offer.features) {
       features = dataCard.offer.features;
@@ -80,60 +76,34 @@
   };
 
   // функция получения массива данных, готового для отрисовки меток на карте
-  var getRenderingData = function (data) {
-    var randeringData = [];
+  var getRenderingData = function (records) {
+    var randeringRecords = [];
+    filterValues = {};
     filterValues.index = 0;
-    fillMainFiltersValue(typeFilter, 'type');
-    fillMainFiltersValue(priceFilter, 'price');
-    fillMainFiltersValue(roomsFilter, 'rooms');
-    fillMainFiltersValue(guestsFilter, 'guests');
-    fillFeatureFiltersValue(wifiFilter, 'wifi');
-    fillFeatureFiltersValue(dishwasherFilter, 'dishwasher');
-    fillFeatureFiltersValue(parkingFilter, 'parking');
-    fillFeatureFiltersValue(washerFilter, 'washer');
-    fillFeatureFiltersValue(elevatorFilter, 'elevator');
-    fillFeatureFiltersValue(conditionerFilter, 'conditioner');
+    fillFilterValues();
 
-    data.forEach(function (card) {
+    var filteredRecords = records.filter(function (card) {
       card.totalRank = 0;
       setTypeRank(card, 'type');
       setPriceRank(card);
       setCapacityDataRanks(card, 'rooms');
       setCapacityDataRanks(card, 'guests');
       setFeaturesDataRanks(card);
-
       if (filterValues.index !== card.totalRank) {
         card.totalRank = 0;
       }
+      return card.totalRank === filterValues.index;
     });
 
-    var filteredData = data.filter(function (rankedCard) {
-      return rankedCard.totalRank === filterValues.index;
-    });
+    shownPinsNumber = filteredRecords.length < MAP_PIN_QUANTITY ? filteredRecords.length : MAP_PIN_QUANTITY;
 
-    shownPinsNumber = filteredData.length < MAP_PIN_QUANTITY ? filteredData.length : MAP_PIN_QUANTITY;
+    randeringRecords = filteredRecords.slice(0, shownPinsNumber);
 
-    randeringData = filteredData.slice(0, shownPinsNumber);
-
-    return randeringData;
+    return randeringRecords;
   };
 
-  // функция добавления обработчиков в фильтры настройки объявлений
-  var addFilterListeners = function () {
-    typeFilter.addEventListener('change', window.map.onFilterChange);
-    priceFilter.addEventListener('change', window.map.onFilterChange);
-    roomsFilter.addEventListener('change', window.map.onFilterChange);
-    guestsFilter.addEventListener('change', window.map.onFilterChange);
-    wifiFilter.addEventListener('change', window.map.onFilterChange);
-    dishwasherFilter.addEventListener('change', window.map.onFilterChange);
-    parkingFilter.addEventListener('change', window.map.onFilterChange);
-    washerFilter.addEventListener('change', window.map.onFilterChange);
-    elevatorFilter.addEventListener('change', window.map.onFilterChange);
-    conditionerFilter.addEventListener('change', window.map.onFilterChange);
-  };
-
-  // повесим обработчики изменений на фильтры настройки похожих объявлений
-  addFilterListeners();
+  // добавим обработчик изменений на форму фильтрации похожих объявлений
+  window.utils.filterForm.addEventListener('change', window.map.onFilterChange);
 
   window.selection = {
     getRenderingData: getRenderingData
