@@ -20,7 +20,7 @@
     if (!codeErrorToText[xhr.status]) {
       error = 'Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText;
     }
-    error = codeErrorToText[xhr.status];
+    error = codeErrorToText[xhr.status] || xhr.statusText;
     if (error) {
       onError(error);
     }

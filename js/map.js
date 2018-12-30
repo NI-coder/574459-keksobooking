@@ -2,7 +2,6 @@
 
 (function () {
   var firstData;
-  var rankedData;
   var renderingData;
   var offerPins;
   var shownPins;
@@ -46,10 +45,8 @@
 
   // обработчик успешной загрузки данных с сервера
   var onSuccessGetting = function (data) {
-    // сохраним данные в переменную
+    // сохраним пришедшие с сервера данные в переменную
     firstData = data;
-    // дополним массив полученных с сервера данных рейтингом сходства с данными фильтров
-    rankedData = window.selection.getRankedData(firstData);
 
     // активируем карту
     window.utils.map.classList.remove('map--faded');
@@ -64,10 +61,10 @@
     }
 
     // выгрузим теги всех меток в основную разметку и спрячем их
-    window.map.offerPins = renderPins(rankedData);
+    window.map.offerPins = renderPins(firstData);
 
     // получим отфильтрованные данные для отрисовки меток на карте
-    renderingData = window.selection.getRenderingData(rankedData);
+    renderingData = window.selection.getRenderingData(firstData);
 
     // покажем на карте отфильтрованные метки объявлений
     shownPins =
@@ -159,8 +156,7 @@
     shownPins.forEach(function (pin) {
       pin.classList.add('visually-hidden');
     });
-    rankedData = window.selection.getRankedData(firstData);
-    renderingData = window.selection.getRenderingData(rankedData);
+    renderingData = window.selection.getRenderingData(firstData);
     shownPins =
     showFilteredPins(renderingData, window.map.offerPins);
     window.map.addPinsHandlers(shownPins, renderingData);

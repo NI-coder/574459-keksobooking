@@ -3,23 +3,12 @@
 (function () {
   var MAP_PIN_QUANTITY = 5;
 
-  // перечисление критериев похожести объектов по их свойствам
-  var PropertyRank = {
-    TYPE: 7,
-    PRICE: 7,
-    ROOMS: 5,
-    GUESTS: 7,
-    WIFI: 3,
-    DISHWASHER: 1,
-    PARKING: 3,
-    WASHER: 1,
-    ELEVATOR: 1,
-    CONDITIONER: 3,
-  };
-
   var priceRank;
   var features;
-  var newData = [];
+  var shownPinsNumber;
+  var filterValues = {
+    index: 0
+  };
 
   // найдём DOM-элементы фильтров
   var typeFilter = window.utils.map.querySelector('#housing-type');
@@ -33,85 +22,100 @@
   var elevatorFilter = window.utils.map.querySelector('#filter-elevator');
   var conditionerFilter = window.utils.map.querySelector('#filter-conditioner');
 
-  // функция выставления рейтинга объектам массива исходных данных по сходству с выбором основных фильтров
-  var getMainDataRanks = function (dataCard, filter, filterItem) {
-    if (filter.value === 'any' || filter.value === dataCard.offer[filterItem]) {
-      dataCard.totalRank += PropertyRank[filterItem.toUpperCase()];
+  // функция удаления свойств объекта, собирающего значения фильтров
+  var deleteFilterValuesProperty = function (property) {
+    if (property) {
+      delete filterValues[property];
     }
   };
 
-  var setPriceRank = function (dataCard, filter) {
-    priceRank = {
-      any: PropertyRank.PRICE,
-      middle: dataCard.offer.price >= 10000 && dataCard.offer.price <= 50000 ? PropertyRank.PRICE : 0,
-      low: dataCard.offer.price <= 10000 ? PropertyRank.PRICE : 0,
-      high: dataCard.offer.price >= 50000 ? PropertyRank.PRICE : 0,
-    };
-    dataCard.priceRank = PropertyRank.PRICE;
-    dataCard.totalRank += priceRank[filter.value];
-    return dataCard.totalRank;
+  // функции заполнения объекта, собирающего значения основных фильтров
+  var fillMainFiltersValue = function (filter, filterItem) {
+    deleteFilterValuesProperty(filterItem);
+    if (filter.value !== 'any') {
+      filterValues[filterItem] = filter.value;
+      filterValues.index++;
+    }
+  };
+  var fillFeatureFiltersValue = function (filter, filterItem) {
+    deleteFilterValuesProperty(filterItem);
+    if (filter.checked) {
+      filterValues[filterItem] = filter.value;
+      filterValues.index++;
+    }
   };
 
-  // функция выставления рейтинга объектам массива исходных данных по сходству с выбором дополнительных услуг
-  var getFeaturesDataRanks = function (dataCard, featureFilter, featureItem) {
+  // функции выставления рейтинга объектам массива исходных данных по сходству с выбором фильтров
+  var setTypeRank = function (dataCard) {
+    if (filterValues.type && filterValues.type === dataCard.offer.type) {
+      dataCard.totalRank++;
+    }
+  };
+  var setCapacityDataRanks = function (dataCard, filterItem) {
+    if (filterValues[filterItem] && +filterValues[filterItem] === dataCard.offer[filterItem]) {
+      dataCard.totalRank++;
+    }
+  };
+  var setPriceRank = function (dataCard) {
+    priceRank = {
+      any: 0,
+      middle: dataCard.offer.price >= 10000 && dataCard.offer.price <= 50000 ? 1 : 0,
+      low: dataCard.offer.price <= 10000 ? 1 : 0,
+      high: dataCard.offer.price >= 50000 ? 1 : 0,
+    };
+
+    if (filterValues.price && priceRank[filterValues.price] === 1) {
+      dataCard.totalRank++;
+    }
+  };
+  var setFeaturesDataRanks = function (dataCard) {
     if (dataCard.offer.features) {
       features = dataCard.offer.features;
       features.forEach(function (feature) {
-        if (featureFilter.checked && feature === featureItem) {
-          dataCard.totalRank += PropertyRank[featureItem.toUpperCase()];
+        if (filterValues[feature]) {
+          dataCard.totalRank++;
         }
       });
     }
   };
 
-  // функция получения объектами массива данных рейтинга сходства с данными фильтров
-  var getRankedData = function (data) {
-    var rankedData = [];
-    data.forEach(function (card) {
-      card.priceRank = 0;
-      card.totalRank = 0;
-      getMainDataRanks(card, typeFilter, 'type');
-      setPriceRank(card, priceFilter);
-      getMainDataRanks(card, roomsFilter, 'rooms');
-      getMainDataRanks(card, guestsFilter, 'guests');
-      getFeaturesDataRanks(card, wifiFilter, 'wifi');
-      getFeaturesDataRanks(card, dishwasherFilter, 'dishwasher');
-      getFeaturesDataRanks(card, parkingFilter, 'parking');
-      getFeaturesDataRanks(card, washerFilter, 'washer');
-      getFeaturesDataRanks(card, elevatorFilter, 'elevator');
-      getFeaturesDataRanks(card, conditionerFilter, 'conditioner');
-      rankedData.push(card);
-    });
-
-    return rankedData;
-  };
-
-  // создадим копию массива данных и отсортируем его по убыванию рейтинга сходства с данными фильтров
+  // функция получения массива данных, готового для отрисовки меток на карте
   var getRenderingData = function (data) {
-    newData = data.slice()
-    .sort(function (first, second) {
-      if (first.totalRank > second.totalRank) {
-        return -1;
-      } else if (first.totalRank < second.totalRank) {
-        return 1;
-      } else {
-        if (first.priceRank > second.priceRank) {
-          return -1;
-        } else if (first.priceRank < second.priceRank) {
-          return 1;
-        } else {
-          return 0;
-        }
+    var randeringData = [];
+    filterValues.index = 0;
+    fillMainFiltersValue(typeFilter, 'type');
+    fillMainFiltersValue(priceFilter, 'price');
+    fillMainFiltersValue(roomsFilter, 'rooms');
+    fillMainFiltersValue(guestsFilter, 'guests');
+    fillFeatureFiltersValue(wifiFilter, 'wifi');
+    fillFeatureFiltersValue(dishwasherFilter, 'dishwasher');
+    fillFeatureFiltersValue(parkingFilter, 'parking');
+    fillFeatureFiltersValue(washerFilter, 'washer');
+    fillFeatureFiltersValue(elevatorFilter, 'elevator');
+    fillFeatureFiltersValue(conditionerFilter, 'conditioner');
+
+    data.forEach(function (card) {
+      card.totalRank = 0;
+      setTypeRank(card, 'type');
+      setPriceRank(card);
+      setCapacityDataRanks(card, 'rooms');
+      setCapacityDataRanks(card, 'guests');
+      setFeaturesDataRanks(card);
+
+      if (filterValues.index !== card.totalRank) {
+        card.totalRank = 0;
       }
     });
-    // ограничим длину нового массива и отфильтруем его по первому элементу
-    newData.length = MAP_PIN_QUANTITY;
-    var maxRank = newData[0].totalRank;
-    var filteredData = newData.filter(function (dataItem) {
-      return dataItem.totalRank === maxRank;
+
+    var filteredData = data.filter(function (rankedCard) {
+      return rankedCard.totalRank === filterValues.index;
     });
 
-    return filteredData;
+    shownPinsNumber = filteredData.length < MAP_PIN_QUANTITY ? filteredData.length : MAP_PIN_QUANTITY;
+
+    randeringData = filteredData.slice(0, shownPinsNumber);
+
+    return randeringData;
   };
 
   // функция добавления обработчиков в фильтры настройки объявлений
@@ -132,7 +136,6 @@
   addFilterListeners();
 
   window.selection = {
-    getRankedData: getRankedData,
     getRenderingData: getRenderingData
   };
 })();
