@@ -3,6 +3,8 @@
 (function () {
   var popupMessage;
 
+  // найдём тег <main>
+  var main = document.querySelector('main');
   // найдём шаблон сообщения об успехе создания объявления
   var successMessageTemplate = document.querySelector('#success').content.querySelector('.success');
   // найдём шаблон сообщения об ошибке создания объявления
@@ -31,22 +33,24 @@
     }
   };
 
+  // функция отрисовки всплывающего сообщения
+  var renderPopupMessage = function (messageTemplate) {
+    popupMessage = messageTemplate.cloneNode(true);
+    main.appendChild(popupMessage);
+    document.addEventListener('keydown', onPopupMessageEscPress);
+    document.addEventListener('click', onWindowClick);
+  };
+
   // обработчик успешной отправки формы на сервер
   var onSuccessSending = function () {
     window.rollback.resetPage();
-    popupMessage = successMessageTemplate.cloneNode(true);
-    window.utils.adForm.appendChild(popupMessage);
-    document.addEventListener('keydown', onPopupMessageEscPress);
-    document.addEventListener('click', onWindowClick);
+    renderPopupMessage(successMessageTemplate);
   };
 
   // обработчик ошибки запроса
   var onFailRequest = function (message) {
     errorMessageTemplate.children[0].innerHTML = message;
-    popupMessage = errorMessageTemplate.cloneNode(true);
-    window.utils.map.appendChild(popupMessage);
-    document.addEventListener('keydown', onPopupMessageEscPress);
-    document.addEventListener('click', onWindowClick);
+    renderPopupMessage(errorMessageTemplate);
   };
 
   window.responseMessage = {

@@ -4,11 +4,8 @@
   var MAP_PIN_QUANTITY = 5;
 
   var priceRank;
-  var features;
   var shownPinsNumber;
-  var filterValues = {
-    index: 0
-  };
+  var filterValues = [];
   var nameToFilterName = {
     'housing-type': 'type',
     'housing-price': 'price',
@@ -27,50 +24,30 @@
     // найдём все выделенные поля формы фильтрации
     var markedFilters = document.querySelectorAll('.map__filters option:checked:not([value="any"]), .map__filters input:checked');
     markedFilters.forEach(function (field) {
-      if (!field.name) {
-        var filterName = nameToFilterName[field.parentElement.name];
-        filterValues[filterName] = field.value;
-        filterValues.index++;
-      } else {
-        filterValues[field.value] = field.value;
-        filterValues.index++;
-      }
+      var filterValue = {};
+      var filterName = field.name ? field.value : nameToFilterName[field.parentElement.name];
+      filterValue[filterName] = field.value;
+      filterValues.push(filterValue);
     });
   };
 
   // функции выставления рейтинга объектам массива исходных данных по сходству с выбором фильтров
-  var setTypeRank = function (dataCard) {
-    if (filterValues.type && filterValues.type === dataCard.offer.type) {
-      dataCard.totalRank++;
-    }
-  };
-
-  var setCapacityDataRanks = function (dataCard, filterItem) {
-    if (filterValues[filterItem] && +filterValues[filterItem] === dataCard.offer[filterItem]) {
-      dataCard.totalRank++;
-    }
-  };
-
-  var setPriceRank = function (dataCard) {
-    priceRank = {
-      any: 0,
-      middle: dataCard.offer.price >= 10000 && dataCard.offer.price <= 50000,
-      low: dataCard.offer.price < 10000,
-      high: dataCard.offer.price > 50000
-    };
-
-    if (filterValues.price && priceRank[filterValues.price]) {
-      dataCard.totalRank++;
-    }
+  var setMainDataRanks = function (dataCard, filterItem) {
+    filterValues.forEach(function (field) {
+      if (field[filterItem] && field[filterItem] === dataCard.offer[filterItem].toString()) {
+        dataCard.totalRank++;
+      }
+    });
   };
 
   var setFeaturesDataRanks = function (dataCard) {
     if (dataCard.offer.features) {
-      features = dataCard.offer.features;
-      features.forEach(function (feature) {
-        if (filterValues[feature]) {
-          dataCard.totalRank++;
-        }
+      dataCard.offer.features.forEach(function (feature) {
+        filterValues.forEach(function (field) {
+          if (field[feature]) {
+            dataCard.totalRank++;
+          }
+        });
       });
     }
   };
@@ -78,21 +55,29 @@
   // функция получения массива данных, готового для отрисовки меток на карте
   var getRenderingData = function (records) {
     var randeringRecords = [];
-    filterValues = {};
-    filterValues.index = 0;
+    filterValues.length = 0;
     fillFilterValues();
 
     var filteredRecords = records.filter(function (card) {
       card.totalRank = 0;
-      setTypeRank(card, 'type');
-      setPriceRank(card);
-      setCapacityDataRanks(card, 'rooms');
-      setCapacityDataRanks(card, 'guests');
+      priceRank = {
+        any: 0,
+        middle: card.offer.price >= 10000 && card.offer.price <= 50000,
+        low: card.offer.price < 10000,
+        high: card.offer.price > 50000
+      };
+
+      filterValues.forEach(function (field) {
+        if (field.price && priceRank[field.price]) {
+          card.totalRank++;
+        }
+      });
+      setMainDataRanks(card, 'type');
+      setMainDataRanks(card, 'rooms');
+      setMainDataRanks(card, 'guests');
       setFeaturesDataRanks(card);
-      if (filterValues.index !== card.totalRank) {
-        card.totalRank = 0;
-      }
-      return card.totalRank === filterValues.index;
+
+      return card.totalRank === filterValues.length;
     });
 
     shownPinsNumber = filteredRecords.length < MAP_PIN_QUANTITY ? filteredRecords.length : MAP_PIN_QUANTITY;

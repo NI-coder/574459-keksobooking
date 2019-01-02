@@ -45,7 +45,10 @@
 
   // обработчик успешной загрузки данных с сервера
   var onSuccessGetting = function (records) {
-    // сохраним пришедшие с сервера данные в переменную
+    // присвоим id каждому объекту входящего массива данных и сохраним массив в переменную
+    records.map(function (record, index) {
+      record.id = 'advert' + index;
+    });
     firstRecords = records;
 
     // активируем карту
@@ -93,18 +96,18 @@
   // создадим DOM-элементы меток объявлений на основе массива входных данных и скроем их
   var renderPins = function (cards) {
     var mapPins = [];
-    for (var i = 0; i < cards.length; i++) {
-      if (cards[i].offer) {
+    cards.map(function (card, index) {
+      if (card.offer) {
         var mapPinElement = mapPinTemplate.cloneNode(true);
-        mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
+        mapPinElement.id = card.id;
+        mapPinElement.style = 'left:' + card.location['x'] + 'px; top:' + card.location['y'] + 'px;';
         var mapPinImage = mapPinElement.querySelector('img');
-        mapPinImage.src = cards[i].author.avatar;
-        mapPinImage.alt = cards[i].offer.title;
-        mapPins[i] = window.utils.fragment.appendChild(mapPinElement);
-        // скроем все метки
-        mapPins[i].classList.add('visually-hidden');
+        mapPinImage.src = card.author.avatar;
+        mapPinImage.alt = card.offer.title;
+        mapPins[index] = window.utils.fragment.appendChild(mapPinElement);
+        mapPins[index].classList.add('visually-hidden');
       }
-    }
+    });
     // выгружаем разметку меток из шаблона в основную разметку
     mapPinsBlock.appendChild(window.utils.fragment);
 
@@ -114,15 +117,13 @@
   // функция отрисовки на карте отфильтрованных меток объявлений
   var showFilteredPins = function (records, pins) {
     var filteredPins = [];
-    records.forEach(function (pinRecords) {
-      var pinDataX = pinRecords.location.x + 'px';
-      var pinDataY = pinRecords.location.y + 'px';
-      for (var i = 0; i < pins.length; i++) {
-        if (pins[i].style.left === pinDataX && pins[i].style.top === pinDataY) {
-          pins[i].classList.remove('visually-hidden');
-          filteredPins.push(pins[i]);
+    records.forEach(function (pinRecord) {
+      pins.forEach(function (pin) {
+        if (pin.id === pinRecord.id) {
+          pin.classList.remove('visually-hidden');
+          filteredPins.push(pin);
         }
-      }
+      });
     });
     return filteredPins;
   };

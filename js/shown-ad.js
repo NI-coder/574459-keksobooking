@@ -43,11 +43,11 @@
     featureItems.innerHTML = '';
     if (offerCard.offer.features.length > 0) {
       featureItems.classList.remove('visually-hidden');
-      for (var i = 0; i < offerCard.offer.features.length; i++) {
+      offerCard.offer.features.map(function (feature) {
         var featureItem = document.createElement('li');
-        featureItem.className = 'popup__feature ' + FEATURES_CLASSES[offerCard.offer.features[i]];
+        featureItem.className = 'popup__feature ' + FEATURES_CLASSES[feature];
         featureItems.appendChild(featureItem);
-      }
+      });
     }
   };
 
@@ -56,13 +56,13 @@
     photos.classList.add('visually-hidden');
     if (offerCard.offer.photos.length > 0) {
       photos.classList.remove('visually-hidden');
-      for (var j = 0; j < offerCard.offer.photos.length; j++) {
-        if (j < offerCard.offer.photos.length - 1) {
+      offerCard.offer.photos.map(function (pic, index, pics) {
+        if (index < pics.length - 1) {
           var newPhoto = photos.children[0].cloneNode(true);
           photos.appendChild(newPhoto);
         }
-        photos.children[j].src = offerCard.offer.photos[j];
-      }
+        photos.children[index].src = pic;
+      });
     }
   };
 
