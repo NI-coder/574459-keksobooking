@@ -55,13 +55,13 @@
     window.utils.map.classList.remove('map--faded');
 
     // разблокируем фильтры и форму заполнения объявления
-    for (var i = 0; i < window.utils.filterForm.children.length; i++) {
-      window.utils.filterForm.children[i].disabled = '';
-    }
+    Array.from(window.utils.filterForm.children).map(function (field) {
+      field.disabled = '';
+    });
     window.utils.adForm.classList.remove('ad-form--disabled');
-    for (i = 0; i < window.utils.adForm.children.length; i++) {
-      window.utils.adForm.children[i].disabled = '';
-    }
+    Array.from(window.utils.adForm.children).map(function (field) {
+      field.disabled = '';
+    });
 
     // выгрузим теги всех меток в основную разметку и спрячем их
     window.map.offerPins = renderPins(firstRecords);
@@ -75,7 +75,7 @@
 
     // установим меткам обработчики кликов
     window.map.addPinsHandlers = function (pins, datas) {
-      for (i = 0; i < pins.length; i++) {
+      for (var i = 0; i < pins.length; i++) {
         addPinsClickHandler(pins[i], datas[i]);
       }
     };

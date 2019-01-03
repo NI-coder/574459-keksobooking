@@ -25,7 +25,7 @@
         : nameToFilterName[field.parentElement.name];
       return {
         name: filterName,
-        value: field.value
+        value: !isNaN(field.value) ? Math.round(field.value) : field.value
       };
     });
   };
