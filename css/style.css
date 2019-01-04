@@ -806,11 +806,12 @@ fieldset {
 }
 
 .ad-form__photo {
+  display: flex;
+  flex-wrap: wrap;
   margin-right: 10px;
   margin-bottom: 10px;
 
-  width: 70px;
-  height: 70px;
+  width: 280px;
 
   background-color: #e4e4de;
   border-radius: 5px;

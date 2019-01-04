@@ -12,22 +12,34 @@
     '500': 'Внутренняя ошибка сервера. Попробуйте позже!'
   };
 
-  var xhr;
-
   // функция обработки реакции сервера на запрос
-  var setServerResponseInterpreter = function (onError) {
-    var error;
-    if (!codeErrorToText[xhr.status]) {
-      error = 'Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText;
-    }
-    error = codeErrorToText[xhr.status] || xhr.statusText;
-    if (error) {
-      onError(error);
-    }
+  var getXHR = function (onLoad, onError) {
+    // создадим объект запроса
+    var xhr = new XMLHttpRequest();
+
+    // ожидаем ответ сервера в формате json
+    xhr.responseType = 'json';
+
+    // отслеживаем момент загрузки
+    xhr.addEventListener('load', function () {
+      // загрузим данные при успешном выполнении запроса
+      if (xhr.status === SUCCESS_CODE) {
+        onLoad(xhr.response);
+      } else {
+        // обработаем реакцию сервера на запрос
+        var error = codeErrorToText[xhr.status] || 'Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText;
+        onError(error);
+      }
+    });
+
+    // обработаем возможные ошибки выполнения запроса
+    setRequestErrorsInterpreter(xhr, onError);
+
+    return xhr;
   };
 
   // функция обработки ошибок выполнения запроса
-  var setRequestErrorsInterpreter = function (onError) {
+  var setRequestErrorsInterpreter = function (xhr, onError) {
     // сообщим об ошибке при отсутствии соединения с сервером
     xhr.addEventListener('error', function () {
       onError('Произошла ошибка соединения');
@@ -44,52 +56,21 @@
   // функция загрузки данных с сервера
   var loadData = function (onLoad, onError) {
     // создадим объект запроса
-    xhr = new XMLHttpRequest();
-    // ожидаем ответ сервера в формате json
-    xhr.responseType = 'json';
-
-    // отслеживаем момент загрузки
-    xhr.addEventListener('load', function () {
-      // загрузим данные при успешном выполнении запроса
-      if (xhr.status === SUCCESS_CODE) {
-        onLoad(xhr.response);
-      } else {
-        // обработаем реакцию сервера на запрос
-        setServerResponseInterpreter(onError);
-      }
-    });
-    // обработаем возможные ошибки выполнения запроса
-    setRequestErrorsInterpreter(onError);
-
+    var xhr = getXHR(onLoad, onError);
     // формируем запрос на сервер и отправляем его
     xhr.open('GET', DATA_URL);
     xhr.send();
   };
 
   // функция выгрузки данных формы на сервер
-  var unloadForm = function (data, onLoad, onError) {
-    xhr = new XMLHttpRequest();
-    xhr.responseType = 'json';
-
-    // отслеживаем момент окончания передачи данных формы на сервер
-    xhr.addEventListener('load', function () {
-      // загрузим данные при успешном выполнении запроса
-      if (xhr.status === SUCCESS_CODE) {
-        onLoad();
-      } else {
-        // обработаем реакцию сервера на запрос
-        setServerResponseInterpreter(onError);
-      }
-    });
-    // обработаем возможные ошибки выполнения запроса
-    setRequestErrorsInterpreter(onError);
-
+  var uploadForm = function (data, onLoad, onError) {
+    var xhr = getXHR(onLoad, onError);
     xhr.open('POST', FORM_URL);
     xhr.send(data);
   };
 
   window.backend = {
     loadData: loadData,
-    unloadForm: unloadForm,
+    uploadForm: uploadForm,
   };
 })();

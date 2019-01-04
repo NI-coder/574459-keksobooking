@@ -43,22 +43,28 @@
     }
   };
 
+  // снятие блокировки с интерактивных полей
+  var makeFieldsActive = function (form) {
+    Array.from(form.children).forEach(function (field) {
+      field.disabled = '';
+    });
+  };
+
   // обработчик успешной загрузки данных с сервера
   var onSuccessGetting = function (records) {
-    // сохраним пришедшие с сервера данные в переменную
+    // присвоим id каждому объекту входящего массива данных и сохраним массив в переменную
+    records.forEach(function (record, index) {
+      record.id = 'advert' + index;
+    });
     firstRecords = records;
 
     // активируем карту
     window.utils.map.classList.remove('map--faded');
 
     // разблокируем фильтры и форму заполнения объявления
-    for (var i = 0; i < window.utils.filterForm.children.length; i++) {
-      window.utils.filterForm.children[i].disabled = '';
-    }
+    makeFieldsActive(window.utils.filterForm);
+    makeFieldsActive(window.utils.adForm);
     window.utils.adForm.classList.remove('ad-form--disabled');
-    for (i = 0; i < window.utils.adForm.children.length; i++) {
-      window.utils.adForm.children[i].disabled = '';
-    }
 
     // выгрузим теги всех меток в основную разметку и спрячем их
     window.map.offerPins = renderPins(firstRecords);
@@ -72,9 +78,9 @@
 
     // установим меткам обработчики кликов
     window.map.addPinsHandlers = function (pins, datas) {
-      for (i = 0; i < pins.length; i++) {
-        addPinsClickHandler(pins[i], datas[i]);
-      }
+      pins.forEach(function (pin, index) {
+        addPinsClickHandler(pin, datas[index]);
+      });
     };
     window.map.addPinsHandlers(shownPins, renderingRecords);
 
@@ -92,19 +98,18 @@
 
   // создадим DOM-элементы меток объявлений на основе массива входных данных и скроем их
   var renderPins = function (cards) {
-    var mapPins = [];
-    for (var i = 0; i < cards.length; i++) {
-      if (cards[i].offer) {
+    var mapPins = cards.map(function (card) {
+      if (card.offer) {
         var mapPinElement = mapPinTemplate.cloneNode(true);
-        mapPinElement.style = 'left:' + cards[i].location['x'] + 'px; top:' + cards[i].location['y'] + 'px;';
+        mapPinElement.id = card.id;
+        mapPinElement.style = 'left:' + card.location['x'] + 'px; top:' + card.location['y'] + 'px;';
         var mapPinImage = mapPinElement.querySelector('img');
-        mapPinImage.src = cards[i].author.avatar;
-        mapPinImage.alt = cards[i].offer.title;
-        mapPins[i] = window.utils.fragment.appendChild(mapPinElement);
-        // скроем все метки
-        mapPins[i].classList.add('visually-hidden');
+        mapPinImage.src = card.author.avatar;
+        mapPinImage.alt = card.offer.title;
+        mapPinElement.classList.add('visually-hidden');
       }
-    }
+      return window.utils.fragment.appendChild(mapPinElement);
+    });
     // выгружаем разметку меток из шаблона в основную разметку
     mapPinsBlock.appendChild(window.utils.fragment);
 
@@ -114,15 +119,12 @@
   // функция отрисовки на карте отфильтрованных меток объявлений
   var showFilteredPins = function (records, pins) {
     var filteredPins = [];
-    records.forEach(function (pinRecords) {
-      var pinDataX = pinRecords.location.x + 'px';
-      var pinDataY = pinRecords.location.y + 'px';
-      for (var i = 0; i < pins.length; i++) {
-        if (pins[i].style.left === pinDataX && pins[i].style.top === pinDataY) {
-          pins[i].classList.remove('visually-hidden');
-          filteredPins.push(pins[i]);
-        }
-      }
+    records.forEach(function (pinRecord) {
+      var pinById = pins.find(function (pin) {
+        return pin.id === pinRecord.id;
+      });
+      pinById.classList.remove('visually-hidden');
+      filteredPins.push(pinById);
     });
     return filteredPins;
   };
@@ -151,6 +153,7 @@
     });
   };
 
+  // функция новой отрисовки меток объявлений после изменения значений фильтров
   var updatePins = function () {
     clearFromPrevPopup();
     shownPins.forEach(function (pin) {

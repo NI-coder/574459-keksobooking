@@ -23,8 +23,10 @@
 
     // обнулим значения полей формы до дефолтного состояния
     window.utils.adForm.reset();
-    window.utils.priceField.placeholder = window.utils.PRICE_FIELD_MIN.flat;
-    window.utils.priceField.min = window.utils.PRICE_FIELD_MIN.flat;
+    window.utils.priceField.placeholder = window.utils.PriceFieldMin.FLAT;
+    window.utils.priceField.min = window.utils.PriceFieldMin.FLAT;
+    window.pictureLoader.avatarPreview.src = 'img/muffin-grey.svg';
+    window.pictureLoader.photoPreviewsBlock.innerHTML = '';
 
 
     // установим параметры начального неактивного состояния фильтрам и форме объявления

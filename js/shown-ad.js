@@ -1,19 +1,19 @@
 'use strict';
 
 (function () {
-  var FEATURES_CLASSES = {
-    wifi: 'popup__feature--wifi',
-    dishwasher: 'popup__feature--dishwasher',
-    parking: 'popup__feature--parking',
-    washer: 'popup__feature--washer',
-    elevator: 'popup__feature--elevator',
-    conditioner: 'popup__feature--conditioner'
+  var FeaturesClasses = {
+    WIFI: 'popup__feature--wifi',
+    DISHWASHER: 'popup__feature--dishwasher',
+    PARKING: 'popup__feature--parking',
+    WASHER: 'popup__feature--washer',
+    ELEVATOR: 'popup__feature--elevator',
+    CONDITIONER: 'popup__feature--conditioner'
   };
-  var TYPES_RUS = {
-    palace: 'Дворец',
-    flat: 'Квартира',
-    house: 'Дом',
-    bungalo: 'Бунгало'
+  var TypesRus = {
+    PALACE: 'Дворец',
+    FLAT: 'Квартира',
+    HOUSE: 'Дом',
+    BUNGALO: 'Бунгало'
   };
 
   // найдём шаблон карточки объявлений
@@ -43,11 +43,11 @@
     featureItems.innerHTML = '';
     if (offerCard.offer.features.length > 0) {
       featureItems.classList.remove('visually-hidden');
-      for (var i = 0; i < offerCard.offer.features.length; i++) {
+      offerCard.offer.features.forEach(function (feature) {
         var featureItem = document.createElement('li');
-        featureItem.className = 'popup__feature ' + FEATURES_CLASSES[offerCard.offer.features[i]];
+        featureItem.className = 'popup__feature ' + FeaturesClasses[feature.toUpperCase()];
         featureItems.appendChild(featureItem);
-      }
+      });
     }
   };
 
@@ -56,13 +56,13 @@
     photos.classList.add('visually-hidden');
     if (offerCard.offer.photos.length > 0) {
       photos.classList.remove('visually-hidden');
-      for (var j = 0; j < offerCard.offer.photos.length; j++) {
-        if (j < offerCard.offer.photos.length - 1) {
+      offerCard.offer.photos.forEach(function (pic, index, pics) {
+        if (index < pics.length - 1) {
           var newPhoto = photos.children[0].cloneNode(true);
           photos.appendChild(newPhoto);
         }
-        photos.children[j].src = offerCard.offer.photos[j];
-      }
+        photos.children[index].src = pic;
+      });
     }
   };
 
@@ -84,7 +84,7 @@
     offerTitle.textContent = card.offer.title;
     offerAddress.textContent = card.offer.address;
     offerPrice.textContent = card.offer.price + ' ₽/ночь';
-    offerType.textContent = TYPES_RUS[card.offer.type];
+    offerType.textContent = TypesRus[card.offer.type];
     offerСapacity.textContent = card.offer.rooms + ' ' + capacityDatas.roomsNum + ' для ' + card.offer.guests + ' ' + capacityDatas.guestsNum;
     offerTime.textContent = 'Заезд после ' + card.offer.checkin + ', выезд до ' + card.offer.checkout;
     setOfferFeatures(offerFeatures, card);

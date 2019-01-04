@@ -8,7 +8,6 @@
   };
   var MIN_MAIN_PIN_PACE = 5;
 
-
   var minMainPinX = window.utils.MIN_X - window.utils.MAIN_PIN_WIDTH / 2;
   var maxMainPinX = window.utils.MAX_X - window.utils.MAIN_PIN_WIDTH / 2;
   var startCoords = {};

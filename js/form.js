@@ -47,8 +47,8 @@
     var selectedTypeIndex = window.utils.typeField.selectedIndex;
     if (window.utils.typeField.children[selectedTypeIndex]) {
       var housingType = window.utils.typeField.children[selectedTypeIndex].value;
-      window.utils.priceField.min = window.utils.PRICE_FIELD_MIN[housingType];
-      window.utils.priceField.placeholder = window.utils.PRICE_FIELD_MIN[housingType];
+      window.utils.priceField.min = window.utils.PriceFieldMin[housingType.toUpperCase()];
+      window.utils.priceField.placeholder = window.utils.PriceFieldMin[housingType.toUpperCase()];
     }
     onPriceFieldChange();
   };
@@ -114,7 +114,7 @@
 
   // при отправке формы блокируем действие по умолчанию и заменяем его AJAX запросом
   window.utils.adForm.addEventListener('submit', function (evt) {
-    window.backend.unloadForm(new FormData(window.utils.adForm), window.responseMessage.onSuccessSending, window.responseMessage.onFailRequest);
+    window.backend.uploadForm(new FormData(window.utils.adForm), window.responseMessage.onSuccessSending, window.responseMessage.onFailRequest);
     evt.preventDefault();
   });
 
