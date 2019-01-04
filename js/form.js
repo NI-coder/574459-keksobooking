@@ -47,8 +47,8 @@
     var selectedTypeIndex = window.utils.typeField.selectedIndex;
     if (window.utils.typeField.children[selectedTypeIndex]) {
       var housingType = window.utils.typeField.children[selectedTypeIndex].value;
-      window.utils.priceField.min = window.utils.PRICE_FIELD_MIN[housingType];
-      window.utils.priceField.placeholder = window.utils.PRICE_FIELD_MIN[housingType];
+      window.utils.priceField.min = window.utils.PriceFieldMin[housingType.toUpperCase()];
+      window.utils.priceField.placeholder = window.utils.PriceFieldMin[housingType.toUpperCase()];
     }
     onPriceFieldChange();
   };

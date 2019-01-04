@@ -10,11 +10,11 @@
   var MAIN_PIN_HEIGHT = 65;
   var MAIN_PIN_X = 570;
   var MAIN_PIN_Y = 375;
-  var PRICE_FIELD_MIN = {
-    bungalo: 0,
-    flat: 1000,
-    house: 5000,
-    palace: 10000
+  var PriceFieldMin = {
+    BUNGALO: 0,
+    FLAT: 1000,
+    HOUSE: 5000,
+    PALACE: 10000
   };
 
   // найдём основной блок разметки, в который будем вносить изменения
@@ -52,8 +52,8 @@
     MAIN_PIN_HEIGHT: MAIN_PIN_HEIGHT,
     MAIN_PIN_X: MAIN_PIN_X,
     MAIN_PIN_Y: MAIN_PIN_Y,
-    PRICE_FIELD_MIN: PRICE_FIELD_MIN,
     ESC_KEYCODE: ESC_KEYCODE,
+    PriceFieldMin: PriceFieldMin,
     map: map,
     mainPin: mainPin,
     adForm: adForm,

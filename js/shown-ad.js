@@ -45,7 +45,7 @@
       featureItems.classList.remove('visually-hidden');
       offerCard.offer.features.forEach(function (feature) {
         var featureItem = document.createElement('li');
-        featureItem.className = 'popup__feature ' + FeaturesClasses[feature];
+        featureItem.className = 'popup__feature ' + FeaturesClasses[feature.toUpperCase()];
         featureItems.appendChild(featureItem);
       });
     }
