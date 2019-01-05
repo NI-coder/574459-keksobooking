@@ -1,13 +1,14 @@
 'use strict';
 
 (function () {
-  var MAIN_PIN_ACTIVE_HEIGHT = window.utils.MAIN_PIN_HEIGHT + 16;
-  var MAIN_PIN_START_POSITION = {
-    x: Math.round(window.utils.MAIN_PIN_X + window.utils.MAIN_PIN_WIDTH / 2),
-    y: Math.round(window.utils.MAIN_PIN_Y + MAIN_PIN_ACTIVE_HEIGHT)
-  };
   var MIN_MAIN_PIN_PACE = 5;
+  var MAIN_PIN_POINTER_HEIGHT = 16;
 
+  var mainPinActiveHeight = window.utils.MAIN_PIN_HEIGHT + MAIN_PIN_POINTER_HEIGHT;
+  var mainPinStartPosition = {
+    x: Math.round(window.utils.MAIN_PIN_X + window.utils.MAIN_PIN_WIDTH / 2),
+    y: Math.round(window.utils.MAIN_PIN_Y + mainPinActiveHeight)
+  };
   var minMainPinX = window.utils.MIN_X - window.utils.MAIN_PIN_WIDTH / 2;
   var maxMainPinX = window.utils.MAX_X - window.utils.MAIN_PIN_WIDTH / 2;
   var startCoords = {};
@@ -38,12 +39,12 @@
 
     // устанавливаем текущее положение стартовой метки в поле адреса
     mainPinCurrentPosition.x = Math.round(mainPinCurrentCoords.x + window.utils.MAIN_PIN_WIDTH / 2);
-    mainPinCurrentPosition.y = mainPinCurrentCoords.y + MAIN_PIN_ACTIVE_HEIGHT;
+    mainPinCurrentPosition.y = mainPinCurrentCoords.y + mainPinActiveHeight;
     window.utils.addressInputField.value = mainPinCurrentPosition.x + ', ' + mainPinCurrentPosition.y;
 
     // запишем путь, пройденный стартовой меткой
-    var mainPinPaceX = mainPinCurrentPosition.x - MAIN_PIN_START_POSITION.x;
-    var mainPinPaceY = mainPinCurrentPosition.y - MAIN_PIN_START_POSITION.y;
+    var mainPinPaceX = mainPinCurrentPosition.x - mainPinStartPosition.x;
+    var mainPinPaceY = mainPinCurrentPosition.y - mainPinStartPosition.y;
 
     if (Math.abs(mainPinPaceX) > MIN_MAIN_PIN_PACE || Math.abs(mainPinPaceY) > MIN_MAIN_PIN_PACE) {
       window.mainPin.dragged = true;

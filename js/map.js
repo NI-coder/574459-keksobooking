@@ -6,7 +6,6 @@
   var offerPins;
   var shownPins;
   var popupCard;
-  var addPinsHandlers;
 
   // найдём блок, в который будем вставлять метки
   var mapPinsBlock = window.utils.map.querySelector('.map__pins');
@@ -22,24 +21,24 @@
   };
 
   // функция удаления попапа по Esc
-  var onPopupEscPress = function (evt) {
+  var onPopupCardEscPress = function (evt) {
     if (evt.keyCode === window.utils.ESC_KEYCODE && popupCard) {
-      deletePopup();
+      deletePopupCard();
     }
   };
 
   // функция удаления попапа
-  var deletePopup = function () {
+  var deletePopupCard = function () {
     popupCard.remove();
     popupCard = null;
     deletePrevPinClass();
-    document.removeEventListener('keydown', onPopupEscPress);
+    document.removeEventListener('keydown', onPopupCardEscPress);
   };
 
   // очищение карты от ранее отрисованной карточки-попапа
-  var clearFromPrevPopup = function () {
+  var clearFromPrevPopupCard = function () {
     if (popupCard) {
-      deletePopup();
+      deletePopupCard();
     }
   };
 
@@ -99,15 +98,14 @@
   // создадим DOM-элементы меток объявлений на основе массива входных данных и скроем их
   var renderPins = function (cards) {
     var mapPins = cards.map(function (card) {
-      if (card.offer) {
-        var mapPinElement = mapPinTemplate.cloneNode(true);
-        mapPinElement.id = card.id;
-        mapPinElement.style = 'left:' + card.location['x'] + 'px; top:' + card.location['y'] + 'px;';
-        var mapPinImage = mapPinElement.querySelector('img');
-        mapPinImage.src = card.author.avatar;
-        mapPinImage.alt = card.offer.title;
-        mapPinElement.classList.add('visually-hidden');
-      }
+      var mapPinElement = mapPinTemplate.cloneNode(true);
+      mapPinElement.id = card.id;
+      mapPinElement.style.left = card.location['x'] + 'px';
+      mapPinElement.style.top = card.location['y'] + 'px';
+      var mapPinImage = mapPinElement.querySelector('img');
+      mapPinImage.src = card.author.avatar;
+      mapPinImage.alt = card.offer.title;
+      mapPinElement.classList.add('visually-hidden');
       return window.utils.fragment.appendChild(mapPinElement);
     });
     // выгружаем разметку меток из шаблона в основную разметку
@@ -142,20 +140,20 @@
   // клик по метке связывает данные с получением и отрисовкой карточки объявления
   var addPinsClickHandler = function (pin, data) {
     pin.addEventListener('click', function () {
-      clearFromPrevPopup();
+      clearFromPrevPopupCard();
       pin.classList.add('map__pin--active');
-      popupCard = window.shownAd.getPopupCard(data);
-      document.addEventListener('keydown', onPopupEscPress);
+      popupCard = window.popupCard.get(data);
+      document.addEventListener('keydown', onPopupCardEscPress);
       var closeButton = popupCard.querySelector('.popup__close');
       closeButton.addEventListener('click', function () {
-        deletePopup();
+        deletePopupCard();
       });
     });
   };
 
   // функция новой отрисовки меток объявлений после изменения значений фильтров
   var updatePins = function () {
-    clearFromPrevPopup();
+    clearFromPrevPopupCard();
     shownPins.forEach(function (pin) {
       pin.classList.add('visually-hidden');
     });
@@ -171,9 +169,8 @@
   };
 
   window.map = {
-    deletePopup: deletePopup,
+    deletePopupCard: deletePopupCard,
     offerPins: offerPins,
-    addPinsHandlers: addPinsHandlers,
     onMainPinDrag: onMainPinDrag,
     onFilterChange: onFilterChange
   };
