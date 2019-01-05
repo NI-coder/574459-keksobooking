@@ -49,7 +49,7 @@
 
   // обработчик ошибки запроса
   var onFailRequest = function (message) {
-    errorMessageTemplate.children[0].innerHTML = message;
+    errorMessageTemplate.children[0].textContent = message;
     renderPopupMessage(errorMessageTemplate);
   };
 

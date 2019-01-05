@@ -1,8 +1,11 @@
 'use strict';
 
 (function () {
+  var PhotosPreviewSize = {
+    WIDTH: 70,
+    HEIGHT: 70
+  };
   var FILE_TYPES = ['gif', 'jpg', 'jpeg', 'png'];
-  var reader;
 
   // Найдём input[type = 'file'] для загрузки с жёсткого диска аватара пользователя и фотографий объекта
   var fileAvatarChooser = window.utils.adForm.querySelector('#avatar');
@@ -24,7 +27,7 @@
 
       // при наличии должного формата загрузим картинку по протоколу DataURL
       if (matches) {
-        reader = new FileReader();
+        var reader = new FileReader();
         reader.addEventListener('load', onReaderLoad);
         reader.readAsDataURL(file);
       }
@@ -32,16 +35,16 @@
   };
 
   // обработчик загрузки аватара пользователя
-  var onAvatarReaderLoad = function () {
-    avatarPreview.src = reader.result;
+  var onAvatarReaderLoad = function (evt) {
+    avatarPreview.src = evt.target.result;
   };
 
   // обработчик загрузки фотографий сдаваемого объекта
-  var onPhotosReaderLoad = function () {
+  var onPhotosReaderLoad = function (evt) {
     var preview = document.createElement('img');
-    preview.src = reader.result;
-    preview.width = '70';
-    preview.height = '70';
+    preview.src = evt.target.result;
+    preview.width = PhotosPreviewSize.WIDTH;
+    preview.height = PhotosPreviewSize.HEIGHT;
     preview.alt = 'Фотография объекта';
     photoPreviewsBlock.appendChild(preview);
   };

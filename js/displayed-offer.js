@@ -73,8 +73,8 @@
     var offerAddress = mapCardElement.querySelector('.popup__text--address');
     var offerPrice = mapCardElement.querySelector('.popup__text--price');
     var offerType = mapCardElement.querySelector('.popup__type');
-    var offerСapacity = mapCardElement.querySelector('.popup__text--capacity');
-    var capacityDatas = getСapacityData(card.offer.rooms, card.offer.guests);
+    var offerCapacity = mapCardElement.querySelector('.popup__text--capacity');
+    var capacityText = getСapacityData(card.offer.rooms, card.offer.guests);
     var offerTime = mapCardElement.querySelector('.popup__text--time');
     var offerFeatures = mapCardElement.querySelector('.popup__features');
     var offerDescription = mapCardElement.querySelector('.popup__description');
@@ -85,7 +85,7 @@
     offerAddress.textContent = card.offer.address;
     offerPrice.textContent = card.offer.price + ' ₽/ночь';
     offerType.textContent = TypesRus[card.offer.type];
-    offerСapacity.textContent = card.offer.rooms + ' ' + capacityDatas.roomsNum + ' для ' + card.offer.guests + ' ' + capacityDatas.guestsNum;
+    offerCapacity.textContent = card.offer.rooms + ' ' + capacityText.roomsNum + ' для ' + card.offer.guests + ' ' + capacityText.guestsNum;
     offerTime.textContent = 'Заезд после ' + card.offer.checkin + ', выезд до ' + card.offer.checkout;
     setOfferFeatures(offerFeatures, card);
     offerDescription.textContent = card.offer.description;
@@ -99,7 +99,7 @@
     return window.utils.map.insertBefore(popupInFragment, mapFiltersContainer);
   };
 
-  window.shownAd = {
+  window.displayedOffer = {
     getPopupCard: getPopupCard
   };
 })();

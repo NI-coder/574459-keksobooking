@@ -14,7 +14,7 @@
     // удалим из разметки DOM-элемент отрисованной карточки объявления
     var shownCard = window.utils.map.querySelector('.map__card');
     if (shownCard) {
-      window.map.deletePopup();
+      window.map.deletePopupCard();
     }
 
     // вернём начальные координаты дефолтной метке

@@ -84,11 +84,11 @@
     var selectedGuestsIndex = window.utils.guestsField.selectedIndex;
     var selectedGuestsValue = window.utils.guestsField.children[selectedGuestsIndex].value;
     if (window.utils.roomsField.children[selectedRoomsIndex]) {
-      // Свойство объекта roomsAmount должно быть равно выбранному значению поля комнат.
+      // Свойство словаря roomsToGuestsAmount должно быть равно выбранному значению поля комнат.
       var currentRoomsValue = window.utils.roomsField.children[selectedRoomsIndex].value;
-      // Значение поля количества мест должно входить в массив значений свойства объекта roomsAmount.
+      // Значение поля количества мест должно входить в массив значений свойства словаря roomsToGuestsAmount.
       var validityIndex = roomsToGuestsAmount[currentRoomsValue].permitted.indexOf(selectedGuestsValue);
-      // Если значение отсутствует в соответствующем массиве объекта roomsAmount, то validityIndex будет равен -1, а само значение недопустимо
+      // Если значение отсутствует в соответствующем массиве словаря roomsToGuestsAmount, то validityIndex будет равен -1, а само значение недопустимо
       if (validityIndex !== -1) {
         currentGuestsFieldValidity = true;
       } else {
@@ -105,11 +105,8 @@
   // Обработчик изменений в полях комнат и гостей сообщает об ошибке ввода при её наличии
   var onGuestAndRoomsChange = function () {
     var guestsFieldValidity = getGuestsFieldValidity();
-    if (!guestsFieldValidity.validityStatus) {
-      window.utils.guestsField.setCustomValidity(guestsFieldValidity.textError);
-    } else {
-      window.utils.guestsField.setCustomValidity('');
-    }
+    var validityMessage = guestsFieldValidity.validityStatus ? window.utils.guestsField.setCustomValidity('') : window.utils.guestsField.setCustomValidity(guestsFieldValidity.textError);
+    return validityMessage;
   };
 
   // при отправке формы блокируем действие по умолчанию и заменяем его AJAX запросом

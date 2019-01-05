@@ -13,7 +13,7 @@
   };
 
   // функция обработки реакции сервера на запрос
-  var getXHR = function (onLoad, onError) {
+  var getXHR = function (success, fail) {
     // создадим объект запроса
     var xhr = new XMLHttpRequest();
 
@@ -24,30 +24,30 @@
     xhr.addEventListener('load', function () {
       // загрузим данные при успешном выполнении запроса
       if (xhr.status === SUCCESS_CODE) {
-        onLoad(xhr.response);
+        success(xhr.response);
       } else {
         // обработаем реакцию сервера на запрос
         var error = codeErrorToText[xhr.status] || 'Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText;
-        onError(error);
+        fail(error);
       }
     });
 
     // обработаем возможные ошибки выполнения запроса
-    setRequestErrorsInterpreter(xhr, onError);
+    setRequestErrorsInterpreter(xhr, fail);
 
     return xhr;
   };
 
   // функция обработки ошибок выполнения запроса
-  var setRequestErrorsInterpreter = function (xhr, onError) {
+  var setRequestErrorsInterpreter = function (xhr, fail) {
     // сообщим об ошибке при отсутствии соединения с сервером
     xhr.addEventListener('error', function () {
-      onError('Произошла ошибка соединения');
+      fail('Произошла ошибка соединения');
     });
 
     // сообщим об ошибке при чрезмерной задержке ответа сервера
     xhr.addEventListener('timeout', function () {
-      onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
+      fail('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
     });
     // установим время ожидания ответа сервера
     xhr.timeout = REQUEST_TIMEOUT;
