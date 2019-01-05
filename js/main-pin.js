@@ -2,8 +2,9 @@
 
 (function () {
   var MIN_MAIN_PIN_PACE = 5;
+  var MAIN_PIN_POINTER_HEIGHT = 16;
 
-  var mainPinActiveHeight = window.utils.MAIN_PIN_HEIGHT + 16;
+  var mainPinActiveHeight = window.utils.MAIN_PIN_HEIGHT + MAIN_PIN_POINTER_HEIGHT;
   var mainPinStartPosition = {
     x: Math.round(window.utils.MAIN_PIN_X + window.utils.MAIN_PIN_WIDTH / 2),
     y: Math.round(window.utils.MAIN_PIN_Y + mainPinActiveHeight)

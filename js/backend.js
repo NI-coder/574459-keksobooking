@@ -13,7 +13,7 @@
   };
 
   // функция обработки реакции сервера на запрос
-  var getXHR = function (success, fail) {
+  var getXHR = function (hit, fault) {
     // создадим объект запроса
     var xhr = new XMLHttpRequest();
 
@@ -24,16 +24,16 @@
     xhr.addEventListener('load', function () {
       // загрузим данные при успешном выполнении запроса
       if (xhr.status === SUCCESS_CODE) {
-        success(xhr.response);
+        hit(xhr.response);
       } else {
         // обработаем реакцию сервера на запрос
         var error = codeErrorToText[xhr.status] || 'Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText;
-        fail(error);
+        fault(error);
       }
     });
 
     // обработаем возможные ошибки выполнения запроса
-    setRequestErrorsInterpreter(xhr, fail);
+    setRequestErrorsInterpreter(xhr, fault);
 
     return xhr;
   };

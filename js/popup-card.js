@@ -99,7 +99,7 @@
     return window.utils.map.insertBefore(popupInFragment, mapFiltersContainer);
   };
 
-  window.displayedOffer = {
-    getPopupCard: getPopupCard
+  window.popupCard = {
+    get: getPopupCard
   };
 })();

@@ -142,7 +142,7 @@
     pin.addEventListener('click', function () {
       clearFromPrevPopupCard();
       pin.classList.add('map__pin--active');
-      popupCard = window.displayedOffer.getPopupCard(data);
+      popupCard = window.popupCard.get(data);
       document.addEventListener('keydown', onPopupCardEscPress);
       var closeButton = popupCard.querySelector('.popup__close');
       closeButton.addEventListener('click', function () {

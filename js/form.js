@@ -105,8 +105,8 @@
   // Обработчик изменений в полях комнат и гостей сообщает об ошибке ввода при её наличии
   var onGuestAndRoomsChange = function () {
     var guestsFieldValidity = getGuestsFieldValidity();
-    var validityMessage = guestsFieldValidity.validityStatus ? window.utils.guestsField.setCustomValidity('') : window.utils.guestsField.setCustomValidity(guestsFieldValidity.textError);
-    return validityMessage;
+    var validityMessage = guestsFieldValidity.validityStatus ? '' : guestsFieldValidity.textError;
+    window.utils.guestsField.setCustomValidity(validityMessage);
   };
 
   // при отправке формы блокируем действие по умолчанию и заменяем его AJAX запросом
