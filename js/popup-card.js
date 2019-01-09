@@ -1,6 +1,8 @@
 'use strict';
 
 (function () {
+  var ROOMS_RUS_NAME_LIMIT = 5;
+
   var FeaturesClasses = {
     WIFI: 'popup__feature--wifi',
     DISHWASHER: 'popup__feature--dishwasher',
@@ -28,7 +30,7 @@
     if (roomsNum === 1) {
       roomsRus = 'комната';
     }
-    if (roomsNum >= 5) {
+    if (roomsNum >= ROOMS_RUS_NAME_LIMIT) {
       roomsRus = 'комнат';
     }
     return {
