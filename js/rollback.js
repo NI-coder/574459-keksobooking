@@ -28,6 +28,8 @@
     window.pictureLoader.avatarPreview.src = 'img/muffin-grey.svg';
     window.pictureLoader.photoPreviewsBlock.innerHTML = '';
 
+    // обнулим значения полей фильтра до дефолтного состояния
+    window.utils.filterForm.reset();
 
     // установим параметры начального неактивного состояния фильтрам и форме объявления
     window.startScreen.setDefaultMode();
